@@ -8,12 +8,12 @@ export default function TabLayout() {
             screenOptions={{
                 tabBarActiveTintColor: "#ffd33d",
                 headerStyle: {
-                    backgroundColor: "#25292e",
+                    backgroundColor: "#fff",
                 },
                 headerShadowVisible: false,
-                headerTintColor: "#fff",
+                headerTintColor: "#25292e",
                 tabBarStyle: {
-                    backgroundColor: "#25292e",
+                    backgroundColor: "#ffff",
                 },
             }}
         >
@@ -30,23 +30,32 @@ export default function TabLayout() {
                     ),
                 }}
             />
-            {/*<Tabs.Screen
-                name="about"
+            <Tabs.Screen
+                name="playersPage"
                 options={{
-                    title: "About",
+                    title: "Joueurs",
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons
-                            name={
-                                focused
-                                    ? "information-circle"
-                                    : "information-circle-outline"
-                            }
+                            name={focused ? "people-sharp" : "people-outline"}
                             color={color}
                             size={24}
                         />
                     ),
                 }}
-            />*/}
+            />
+            <Tabs.Screen
+                name="statPage"
+                options={{
+                    title: "Stats",
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons
+                            name={focused ? "podium-sharp" : "podium-outline"}
+                            color={color}
+                            size={24}
+                        />
+                    ),
+                }}
+            />
         </Tabs>
     );
 }
