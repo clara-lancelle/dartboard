@@ -28,7 +28,7 @@ export default function RecentlyPlayed() {
                             className="text-2xl font-bold w-16"
                         >
                             {type}
-                        </Text>{" "}
+                        </Text>
                         <Badge
                             color={
                                 gameStatus === "Terminé" ? "green" : "orange"
