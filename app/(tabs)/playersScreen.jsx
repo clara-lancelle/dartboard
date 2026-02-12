@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View } from "react-native";
+import { Alert, View } from "react-native";
 import HeroButton from "../../components/HeroButton";
 import PlayerList from "../../components/PlayerList";
 import PlayerForm from "../../forms/PlayerForm";
@@ -31,7 +31,6 @@ export default function PlayersScreen() {
         try {
             await createPlayer({ name: playerName, avatar });
             setShowForm(false);
-            alert("Joueur ajouté !");
             setRefresh((prev) => !prev); // trigger reload
         } catch (error) {
             console.error("Error while creating player:", error);
@@ -48,16 +47,33 @@ export default function PlayersScreen() {
         }
     };
 
-    const handleDelete = async (id) => {
-        try {
-            console.log(id);
-            await deletePlayer(id);
-            alert("Joueur supprimé !");
-            setRefresh((prev) => !prev); // trigger reload
-            loadPlayers();
-        } catch (error) {
-            console.error("Error while deleting player:", error);
-        }
+    const handleDelete = (id) => {
+        Alert.alert(
+            "Supprimer le joueur",
+            "Es-tu sûr de vouloir supprimer ce joueur ?",
+            [
+                {
+                    text: "Annuler",
+                    style: "cancel",
+                },
+                {
+                    text: "Supprimer",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await deletePlayer(id);
+                            setRefresh((prev) => !prev);
+                        } catch (error) {
+                            console.error(
+                                "Error while deleting player:",
+                                error,
+                            );
+                        }
+                    },
+                },
+            ],
+            { cancelable: true },
+        );
     };
 
     useEffect(() => {
