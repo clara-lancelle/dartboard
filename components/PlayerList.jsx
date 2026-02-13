@@ -8,6 +8,7 @@ import validateIcon from "../assets/icons/verifie.png";
 
 import { TextInput } from "react-native";
 import AvatarSelector from "../forms/AvatarSelector";
+import { validatePlayer } from "../validations/ValidatePlayer";
 import IconButton from "./IconButton";
 
 const avatarImages = {
@@ -30,6 +31,7 @@ export default function PlayerList({ players, onUpdatePress, onDeletePress }) {
     const [updatedName, setUpdatedName] = useState("");
     const [updatedImage, setUpdatedImage] = useState("");
     const [editingPlayerId, setEditingPlayerId] = useState(null);
+    const [error, setError] = useState("");
 
     return (
         <View className="gap-5 w-11/12 mt-5">
@@ -100,7 +102,7 @@ export default function PlayerList({ players, onUpdatePress, onDeletePress }) {
                                             <TextInput
                                                 value={updatedName}
                                                 onChangeText={setUpdatedName}
-                                                className="bg-gray-200 p-3 rounded-xl"
+                                                className="bg-gray-200 px-3 py-2 rounded-xl"
                                                 placeholder={name}
                                             />
                                             <Text className="text-sm text-gray-400">
@@ -112,6 +114,16 @@ export default function PlayerList({ players, onUpdatePress, onDeletePress }) {
                                     <View className="flex flex-row gap-5 px-4">
                                         <IconButton
                                             onBtnPress={() => {
+                                                const validationError =
+                                                    validatePlayer(
+                                                        updatedName,
+                                                        { required: false },
+                                                    );
+
+                                                if (validationError) {
+                                                    setError(validationError);
+                                                    return;
+                                                }
                                                 onUpdatePress(id, {
                                                     name: updatedName || name,
                                                     avatar:
@@ -120,6 +132,7 @@ export default function PlayerList({ players, onUpdatePress, onDeletePress }) {
                                                 setEditingPlayerId(null);
                                                 setUpdatedName("");
                                                 setUpdatedImage("");
+                                                setError("");
                                             }}
                                             iconPath={validateIcon}
                                             alt="Valider les modifications"
@@ -135,6 +148,11 @@ export default function PlayerList({ players, onUpdatePress, onDeletePress }) {
                                         />
                                     </View>
                                 </View>
+                                {error ? (
+                                    <Text className="text-red-500 text-xs self-center">
+                                        {error}
+                                    </Text>
+                                ) : null}
                                 {showUpdateImageSelect && (
                                     <View
                                         key={`selector-${id}`}

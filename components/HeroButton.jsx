@@ -2,7 +2,7 @@ import { Image, ImageBackground, Pressable, Text, View } from "react-native";
 
 const backgrounds = {
     blue: require("../assets/btn_bg.png"),
-    green: require("../assets/btn_bg_green.png"),
+    green: require("../assets/btn_bg_orange.png"),
 };
 
 const icons = {
