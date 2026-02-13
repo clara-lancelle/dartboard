@@ -7,6 +7,7 @@ import binIcon from "../assets/icons/supprimer.png";
 import validateIcon from "../assets/icons/verifie.png";
 
 import { TextInput } from "react-native";
+import AvatarSelector from "../forms/AvatarSelector";
 import IconButton from "./IconButton";
 
 const avatarImages = {
@@ -25,30 +26,27 @@ const avatarImages = {
 };
 
 export default function PlayerList({ players, onUpdatePress, onDeletePress }) {
-    const [showUpdateForm, setShowUpdateForm] = useState(false);
+    const [showUpdateImageSelect, setShowImageSelect] = useState(false);
     const [updatedName, setUpdatedName] = useState("");
+    const [updatedImage, setUpdatedImage] = useState("");
+    const [editingPlayerId, setEditingPlayerId] = useState(null);
+
     return (
         <View className="gap-5 w-11/12 mt-5">
-            {(players.length > 0 &&
+            {players.length > 0 &&
                 players.map(
                     ({ avatar, name, id, created_at_formatted, ...rest }) =>
-                        (!showUpdateForm && (
+                        (editingPlayerId !== id ? (
                             <View
                                 key={id}
                                 className="h-20 bg-white w-full items-center rounded-xl flex justify-between flex-row gap-4"
                             >
                                 <View className="flex-row items-center gap-4 px-4">
-                                    <ImageBackground
+                                    <Image
                                         source={avatarImages[avatar]}
-                                        style={{ width: 50, height: 50 }}
+                                        style={{ width: 55, height: 55 }}
                                         contentFit="cover"
-                                    >
-                                        <Pressable
-                                            onPress={onBtnPress}
-                                            style={{ width: 35, height: 35 }}
-                                            className=" rounded-full"
-                                        ></Pressable>
-                                    </ImageBackground>
+                                    />
                                     <View>
                                         <Text className="text-lg font-semibold">
                                             {name}
@@ -62,7 +60,7 @@ export default function PlayerList({ players, onUpdatePress, onDeletePress }) {
                                 <View className="flex flex-row gap-5 px-4">
                                     <IconButton
                                         onBtnPress={() =>
-                                            setShowUpdateForm(true)
+                                            setEditingPlayerId(id)
                                         }
                                         iconPath={editIcon}
                                         alt="Modifier le joueur"
@@ -74,52 +72,83 @@ export default function PlayerList({ players, onUpdatePress, onDeletePress }) {
                                     />
                                 </View>
                             </View>
-                        )) || (
-                            <View
-                                key={id}
-                                className="h-20 bg-white w-full items-center rounded-xl flex justify-between flex-row gap-4"
-                            >
-                                <View className="flex-row items-center gap-4 px-4">
-                                    <Image
-                                        source={avatarImages[avatar]}
-                                        style={{ width: 55, height: 55 }}
-                                        contentFit="cover"
-                                    />
-                                    <View>
-                                        <TextInput
-                                            value={updatedName}
-                                            onChangeText={setUpdatedName}
-                                            className="bg-gray-200 p-3 rounded-xl"
-                                            placeholder={name}
+                        ) : (
+                            <>
+                                <View
+                                    key={id}
+                                    className="h-20 bg-white w-full items-center rounded-xl flex justify-between flex-row gap-4"
+                                >
+                                    <View className="flex-row items-center gap-4 px-4">
+                                        <ImageBackground
+                                            source={avatarImages[avatar]}
+                                            style={{ width: 50, height: 50 }}
+                                            contentFit="cover"
+                                        >
+                                            <Pressable
+                                                onPress={() =>
+                                                    setShowImageSelect(true)
+                                                }
+                                                style={{
+                                                    width: 35,
+                                                    height: 35,
+                                                }}
+                                                className=" rounded-full"
+                                            ></Pressable>
+                                        </ImageBackground>
+
+                                        <View>
+                                            <TextInput
+                                                value={updatedName}
+                                                onChangeText={setUpdatedName}
+                                                className="bg-gray-200 p-3 rounded-xl"
+                                                placeholder={name}
+                                            />
+                                            <Text className="text-sm text-gray-400">
+                                                Créé le : {created_at_formatted}
+                                            </Text>
+                                        </View>
+                                    </View>
+
+                                    <View className="flex flex-row gap-5 px-4">
+                                        <IconButton
+                                            onBtnPress={() => {
+                                                onUpdatePress(id, {
+                                                    name: updatedName || name,
+                                                    avatar:
+                                                        updatedImage || avatar,
+                                                });
+                                                setEditingPlayerId(null);
+                                                setUpdatedName("");
+                                                setUpdatedImage("");
+                                            }}
+                                            iconPath={validateIcon}
+                                            alt="Valider les modifications"
                                         />
-                                        <Text className="text-sm text-gray-400">
-                                            Créé le : {created_at_formatted}
-                                        </Text>
+                                        <IconButton
+                                            onBtnPress={() => {
+                                                setEditingPlayerId(null);
+                                                setUpdatedName("");
+                                                setUpdatedImage("");
+                                            }}
+                                            iconPath={dismissIcon}
+                                            alt="Annuler les modifications"
+                                        />
                                     </View>
                                 </View>
-                                <View className="flex flex-row gap-5 px-4">
-                                    <IconButton
-                                        onBtnPress={() => (
-                                            setShowUpdateForm(false),
-                                            onUpdatePress(id, {
-                                                name: updatedName,
-                                                avatar,
-                                            })
-                                        )}
-                                        iconPath={validateIcon}
-                                        alt="Valider les modifications"
-                                    />
-                                    <IconButton
-                                        onBtnPress={() =>
-                                            setShowUpdateForm(false)
-                                        }
-                                        iconPath={dismissIcon}
-                                        alt="Annuler les modifications"
-                                    />
-                                </View>
-                            </View>
-                        ),
-                )) || <Text>Pas encore de joueurs ajoutés.</Text>}
+                                {showUpdateImageSelect && (
+                                    <View
+                                        key={`selector-${id}`}
+                                        className="bg-white "
+                                    >
+                                        <AvatarSelector
+                                            selected={updatedImage || avatar}
+                                            onSelect={setUpdatedImage}
+                                        />
+                                    </View>
+                                )}
+                            </>
+                        )) || <Text>Pas encore de joueurs ajoutés.</Text>,
+                )}
         </View>
     );
 }

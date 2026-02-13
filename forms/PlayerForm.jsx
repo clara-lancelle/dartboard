@@ -11,9 +11,10 @@ export default function PlayerForm({ onSubmit }) {
             <TextInput
                 value={playerName}
                 onChangeText={setPlayerName}
-                className="bg-white p-3 rounded-xl"
+                className="bg-white p-3 rounded-xl mb-4"
                 placeholder="Pseudo du joueur"
             />
+            <Text className="mb-2">Avatar</Text>
             <AvatarSelector selected={avatar} onSelect={setAvatar} />
             <Button
                 title="Ajouter"

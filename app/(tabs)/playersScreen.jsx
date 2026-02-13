@@ -40,7 +40,6 @@ export default function PlayersScreen() {
     const handleUpdate = async (id, { name: playerName, avatar }) => {
         try {
             await updatePlayer(id, { name: playerName, avatar });
-            alert("Joueur modifié !");
             setRefresh((prev) => !prev); // trigger reload
         } catch (error) {
             console.error("Error while updating player:", error);

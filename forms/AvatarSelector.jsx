@@ -1,4 +1,4 @@
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Pressable, View } from "react-native";
 
 const avatarImages = {
     avatar1: require("../assets/avatars/avatar1.png"),
@@ -18,8 +18,7 @@ const avatarImages = {
 export default function AvatarSelector({ selected, onSelect }) {
     return (
         <View>
-            <Text>Avatar</Text>
-            <View className="flex-row my-4 flex-wrap gap-4 justify-center">
+            <View className="flex-row mb-4 flex-wrap gap-4 justify-center">
                 {Object.entries(avatarImages).map(([id, path]) => {
                     const isSelected = selected === id;
                     return (
