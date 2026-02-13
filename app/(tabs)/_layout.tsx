@@ -31,7 +31,7 @@ export default function TabLayout() {
                 }}
             />
             <Tabs.Screen
-                name="playersPage"
+                name="playersScreen"
                 options={{
                     title: "Joueurs",
                     tabBarIcon: ({ color, focused }) => (

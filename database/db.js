@@ -1,3 +1,3 @@
 import * as SQLite from "expo-sqlite";
 
-export const db = SQLite.openDatabase("darts.db");
+export const db = SQLite.openDatabaseSync("dartboard.db");
