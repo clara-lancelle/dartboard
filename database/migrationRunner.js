@@ -14,7 +14,7 @@ export const runMigrations = async () => {
     );
 
     const currentVersion = row ? parseInt(row.value) : 0;
-
+    console.log("migration actuelle :", currentVersion);
     const pending = migrations.filter((m) => m.version > currentVersion);
 
     if (pending.length === 0) return;
@@ -22,7 +22,7 @@ export const runMigrations = async () => {
     await db.withTransactionAsync(async () => {
         for (const migration of pending) {
             await db.execAsync(migration.up);
-
+            console.log("migration en cours :", migration.version.toString());
             await db.runAsync(
                 `INSERT OR REPLACE INTO meta (key, value)
          VALUES ('db_version', ?)`,
