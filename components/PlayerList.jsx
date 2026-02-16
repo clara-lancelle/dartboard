@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { useState } from "react";
 import { ImageBackground, Pressable, Text, View } from "react-native";
 import dismissIcon from "../assets/icons/annuler.png";
@@ -9,6 +8,7 @@ import validateIcon from "../assets/icons/verifie.png";
 import { TextInput } from "react-native";
 import AvatarSelector from "../forms/AvatarSelector";
 import { validatePlayer } from "../validations/ValidatePlayer";
+import AvatarComponent from "./AvatarComponent";
 import IconButton from "./IconButton";
 
 const avatarImages = {
@@ -44,10 +44,9 @@ export default function PlayerList({ players, onUpdatePress, onDeletePress }) {
                                 className="h-20 bg-white w-full items-center rounded-xl flex justify-between flex-row gap-4"
                             >
                                 <View className="flex-row items-center gap-4 px-4">
-                                    <Image
-                                        source={avatarImages[avatar]}
-                                        style={{ width: 55, height: 55 }}
-                                        contentFit="cover"
+                                    <AvatarComponent
+                                        avatar={avatar}
+                                        width="55"
                                     />
                                     <View>
                                         <Text className="text-lg font-semibold">

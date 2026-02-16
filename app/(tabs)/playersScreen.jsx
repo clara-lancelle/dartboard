@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Alert, View } from "react-native";
+import { Alert, ScrollView } from "react-native";
 import HeroButton from "../../components/HeroButton";
 import PlayerList from "../../components/PlayerList";
 import PlayerForm from "../../forms/PlayerForm";
@@ -20,7 +20,6 @@ export default function PlayersScreen() {
         try {
             const data = await getPlayers();
             setPlayers(data);
-            console.log(players);
         } catch (error) {
             console.error("Error while listing players:", error);
         }
@@ -80,19 +79,28 @@ export default function PlayersScreen() {
         loadPlayers();
     }, [refresh]);
     return (
-        <View className="flex-1 items-center justify-center bg-gray-100">
+        <ScrollView
+            className="flex-1 bg-gray-100"
+            contentContainerStyle={{
+                alignItems: "center",
+                justifyContent: "center",
+                flexGrow: 1,
+            }}
+        >
             <HeroButton
                 text="Ajouter un joueur"
                 icon="add"
                 bg="green"
                 onPress={() => setShowForm(true)}
             />
+
             {showForm && (
                 <PlayerForm
                     onSubmit={handleCreate}
                     onDismiss={() => setShowForm(false)}
                 />
             )}
+
             {!showForm && (
                 <PlayerList
                     players={players}
@@ -100,6 +108,6 @@ export default function PlayersScreen() {
                     onDeletePress={handleDelete}
                 />
             )}
-        </View>
+        </ScrollView>
     );
 }

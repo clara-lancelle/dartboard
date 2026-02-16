@@ -61,7 +61,6 @@ export const updatePlayer = async (id, { name, avatar }) => {
 //
 export const deletePlayer = async (id) => {
     const deletedAt = new Date().toISOString();
-    console.log("cc", id, deletedAt);
     await db.runAsync(
         `
     UPDATE players
