@@ -23,6 +23,7 @@ export default function ParamGameScreen() {
         label: "X01",
         value: 1,
     });
+    const [x01Score, setX01Score] = useState(301);
     const [selectedPlayers, setSelectedPlayers] = useState([]);
     const [selectedCheckIn, setSelectedCheckIn] = useState("Straight");
     const [selectedCheckOut, setSelectedCheckOut] = useState("Double");
@@ -31,12 +32,19 @@ export default function ParamGameScreen() {
     const [randomFirstPlayer, setRandomFirstPlayer] = useState(true);
     const [error, setError] = useState("");
 
+    const checkOptions = ["Straight", "Double", "Master", "Tous"];
+    const legsOptions = [1, 3, 5, 7];
+    const setsOptions = [1, 3, 5];
+    const x01Options = [101, 201, 301, 401, 501, 601, 701, 801, 901, 1001];
+
     const OnStartPress = () => {
         console.log(
             "players: ",
             players,
             "type",
             selectedGameType,
+            "x01Score",
+            x01Score,
             "checkin",
             selectedCheckIn,
             "checkout",
@@ -64,10 +72,6 @@ export default function ParamGameScreen() {
         value: g.id,
     }));
 
-    const checkOptions = ["Straight", "Double", "Master", "Tous"];
-    const legsOptions = [1, 3, 5, 7];
-    const setsOptions = [1, 3, 5];
-
     return (
         <ImageBackground
             source={ParamGameBg}
@@ -83,6 +87,17 @@ export default function ParamGameScreen() {
                     placeholder="Mode de jeu"
                 />
                 <View className="flex-row flex-wrap justify-evenly gap-x-2 mt-8">
+                    {selectedGameType.value === 1 && (
+                        <View className="w-full">
+                            <LabelledAnimatedSelect
+                                options={x01Options}
+                                selected={x01Score}
+                                onSelect={(opt) => setX01Score(opt)}
+                                placeholder="Points"
+                                width="full"
+                            />
+                        </View>
+                    )}
                     <LabelledAnimatedSelect
                         options={checkOptions}
                         selected={selectedCheckIn}
@@ -135,6 +150,7 @@ export default function ParamGameScreen() {
                             onPress={() => {
                                 const validationError =
                                     validateGame(selectedPlayers);
+                                setError("");
                                 if (validationError) {
                                     setError(validationError);
                                     return;

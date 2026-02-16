@@ -11,6 +11,7 @@ export default function LabelledAnimatedSelect({
     selected,
     onSelect,
     placeholder = "Choisir...",
+    width = "",
 }) {
     const [open, setOpen] = useState(false);
 
@@ -38,7 +39,7 @@ export default function LabelledAnimatedSelect({
     }));
 
     return (
-        <View className="w-1/3 mt-1">
+        <View className={`${width === "full" ? "w-full" : "w-1/3"} mt-1`}>
             <Text className="text-[#6A5AE0] text-xl ml-1 font-medium">
                 {placeholder}
             </Text>
