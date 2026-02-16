@@ -16,7 +16,6 @@ const avatarImages = {
 };
 
 export default function AvatarComponent({ avatar, width = 24 }) {
-    console.log(width);
     return (
         <Image
             source={avatarImages[avatar] || ""}

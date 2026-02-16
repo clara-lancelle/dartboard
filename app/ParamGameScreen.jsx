@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { ImageBackground, Pressable, Text, View } from "react-native";
+import {
+    ImageBackground,
+    Pressable,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import BtnBgGradient from "../assets/btn_gradient_bg.png";
 import ParamGameBg from "../assets/param_game_bg.png";
 import AnimatedSelect from "../forms/AnimatedSelect";
@@ -8,17 +14,41 @@ import PlayerMultiSelect from "../forms/PlayerMultiSelect";
 import SwitchOption from "../forms/SwitchOption";
 import GameTypeRepository from "../repositories/GameTypeRepository";
 import { getPlayers } from "../repositories/PlayerRepository";
+import { validateGame } from "../validations/ValidateGame";
 
 export default function ParamGameScreen() {
     const [players, setPlayers] = useState([]);
     const [gameTypes, setGameTypes] = useState([]);
-    const [selectedGameType, setSelectedGameType] = useState(null);
+    const [selectedGameType, setSelectedGameType] = useState({
+        label: "X01",
+        value: 1,
+    });
     const [selectedPlayers, setSelectedPlayers] = useState([]);
     const [selectedCheckIn, setSelectedCheckIn] = useState("Straight");
     const [selectedCheckOut, setSelectedCheckOut] = useState("Double");
     const [selectedNumLegs, setSelectedNumLegs] = useState(1);
     const [selectedNumSets, setSelectedNumSets] = useState(1);
     const [randomFirstPlayer, setRandomFirstPlayer] = useState(true);
+    const [error, setError] = useState("");
+
+    const OnStartPress = () => {
+        console.log(
+            "players: ",
+            players,
+            "type",
+            selectedGameType,
+            "checkin",
+            selectedCheckIn,
+            "checkout",
+            selectedCheckOut,
+            "legs",
+            selectedNumLegs,
+            "sets",
+            selectedNumSets,
+            "randomFirstPlayer",
+            randomFirstPlayer,
+        );
+    };
 
     useEffect(() => {
         const loadData = async () => {
@@ -50,8 +80,7 @@ export default function ParamGameScreen() {
                     options={gameTypeOptions}
                     selected={selectedGameType}
                     onSelect={setSelectedGameType}
-                    placeho
-                    lder="Mode de jeu"
+                    placeholder="Mode de jeu"
                 />
                 <View className="flex-row flex-wrap justify-evenly gap-x-2 mt-8">
                     <LabelledAnimatedSelect
@@ -85,23 +114,40 @@ export default function ParamGameScreen() {
                     value={randomFirstPlayer}
                     onChange={setRandomFirstPlayer}
                 />
-                <ImageBackground
-                    source={BtnBgGradient}
-                    resizeMode="cover"
-                    className="absolute bottom-36 self-center px-14 py-6 rounded-full overflow-hidden"
-                >
-                    <Pressable>
-                        <Text className="font-medium text-lg text-white text-center">
-                            Commencer
-                        </Text>
-                    </Pressable>
-                </ImageBackground>
 
+                {error ? (
+                    <Text className="text-red-500 text-lg font-medium self-center">
+                        {error}
+                    </Text>
+                ) : null}
                 <PlayerMultiSelect
                     players={players}
                     selectedPlayers={selectedPlayers}
                     onChange={setSelectedPlayers}
                 />
+                <TouchableOpacity className="mt-auto mb-24 items-center">
+                    <ImageBackground
+                        source={BtnBgGradient}
+                        resizeMode="cover"
+                        className="self-center px-14 py-6 rounded-full overflow-hidden"
+                    >
+                        <Pressable
+                            onPress={() => {
+                                const validationError =
+                                    validateGame(selectedPlayers);
+                                if (validationError) {
+                                    setError(validationError);
+                                    return;
+                                }
+                                OnStartPress();
+                            }}
+                        >
+                            <Text className="font-medium text-lg text-white text-center">
+                                Commencer
+                            </Text>
+                        </Pressable>
+                    </ImageBackground>
+                </TouchableOpacity>
             </View>
         </ImageBackground>
     );

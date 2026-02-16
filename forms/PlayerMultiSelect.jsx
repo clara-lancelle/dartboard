@@ -84,10 +84,13 @@ export default function PlayerMultiSelectWithToasts({ players, onChange }) {
 
             {/* Dropdown */}
             <Animated.View
-                className="overflow-hidden mt-2 z-50 bg-[#845AE9] text-white rounded-xl"
+                className="overflow-hidden mt-2 max-h-52 bg-[#845AE9] text-white rounded-xl"
                 style={animatedStyle}
             >
-                <ScrollView>
+                <ScrollView
+                    showsVerticalScrollIndicator={true}
+                    persistentScrollbar={true}
+                >
                     {players.map((player) => (
                         <TouchableOpacity
                             key={player.id}

@@ -20,7 +20,6 @@ export default function PlayersScreen() {
         try {
             const data = await getPlayers();
             setPlayers(data);
-            console.log(players);
         } catch (error) {
             console.error("Error while listing players:", error);
         }
