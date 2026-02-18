@@ -1,5 +1,7 @@
 // src/repositories/GameTypeRepository.js
 
+import { db } from "../database/db";
+
 const GAME_TYPES = [
     {
         id: 1,
@@ -47,12 +49,28 @@ const GAME_TYPES = [
     },
 ];
 
-export default {
-    getAll() {
-        return GAME_TYPES;
-    },
+//
+// READ - depuis la config JS
+//
+export const getAllGameTypes = () => {
+    return GAME_TYPES;
+};
 
-    getById(id) {
-        return GAME_TYPES.find((g) => g.id === id);
-    },
+export const getGameTypeById = (id) => {
+    return GAME_TYPES.find((g) => g.id === id);
+};
+
+//
+// Sync automatique DB (sécurité si reset DB)
+//
+export const syncGameTypesWithDB = async () => {
+    for (const type of GAME_TYPES) {
+        await db.runAsync(
+            `
+      INSERT OR IGNORE INTO game_types (id, name)
+      VALUES (?, ?)
+      `,
+            [type.id, type.name],
+        );
+    }
 };

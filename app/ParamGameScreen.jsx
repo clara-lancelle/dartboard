@@ -1,3 +1,4 @@
+import { useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import {
     ImageBackground,
@@ -12,11 +13,13 @@ import AnimatedSelect from "../forms/AnimatedSelect";
 import LabelledAnimatedSelect from "../forms/LabelledAnimatedSelect";
 import PlayerMultiSelect from "../forms/PlayerMultiSelect";
 import SwitchOption from "../forms/SwitchOption";
-import GameTypeRepository from "../repositories/GameTypeRepository";
+import * as GameRepository from "../repositories/GameRepository";
+import { getAllGameTypes } from "../repositories/GameTypeRepository";
 import { getPlayers } from "../repositories/PlayerRepository";
 import { validateGame } from "../validations/ValidateGame";
 
 export default function ParamGameScreen() {
+    const navigation = useNavigation();
     const [players, setPlayers] = useState([]);
     const [gameTypes, setGameTypes] = useState([]);
     const [selectedGameType, setSelectedGameType] = useState({
@@ -37,30 +40,44 @@ export default function ParamGameScreen() {
     const setsOptions = [1, 3, 5];
     const x01Options = [101, 201, 301, 401, 501, 601, 701, 801, 901, 1001];
 
-    const OnStartPress = () => {
-        console.log(
-            "players: ",
-            players,
-            "type",
-            selectedGameType,
-            "x01Score",
-            x01Score,
-            "checkin",
-            selectedCheckIn,
-            "checkout",
-            selectedCheckOut,
-            "legs",
-            selectedNumLegs,
-            "sets",
-            selectedNumSets,
-            "randomFirstPlayer",
-            randomFirstPlayer,
-        );
+    const OnStartPress = async () => {
+        try {
+            setError(""); // reset
+
+            const validationError = validateGame(selectedPlayers);
+            if (validationError) {
+                setError(validationError);
+                return;
+            }
+
+            let playersOrdered = [...selectedPlayers];
+
+            if (randomFirstPlayer) {
+                playersOrdered.sort(() => Math.random() - 0.5);
+            }
+
+            // 3️⃣ Création de la game via repository
+            const gameId = await GameRepository.createGame({
+                selectedPlayers: playersOrdered,
+                gameTypeId: selectedGameType.value,
+                legsNumber: selectedNumLegs,
+                setsNumber: selectedNumSets,
+                startingScore: selectedGameType.value == 1 ? x01Score : null,
+                checkIn: selectedCheckIn,
+                checkOut: selectedCheckOut,
+            });
+
+            // Navigation vers GameScreen en passant l'id de la game
+            navigation.navigate("GameScreen", { gameId });
+        } catch (err) {
+            console.error("Erreur création partie:", err);
+            setError("Impossible de créer la partie. Réessayez.");
+        }
     };
 
     useEffect(() => {
         const loadData = async () => {
-            setGameTypes(GameTypeRepository.getAll());
+            setGameTypes(getAllGameTypes());
             const data = await getPlayers();
             setPlayers(data);
         };
@@ -146,18 +163,7 @@ export default function ParamGameScreen() {
                         resizeMode="cover"
                         className="self-center px-14 py-6 rounded-full overflow-hidden"
                     >
-                        <Pressable
-                            onPress={() => {
-                                const validationError =
-                                    validateGame(selectedPlayers);
-                                setError("");
-                                if (validationError) {
-                                    setError(validationError);
-                                    return;
-                                }
-                                OnStartPress();
-                            }}
-                        >
+                        <Pressable onPress={OnStartPress}>
                             <Text className="font-medium text-lg text-white text-center">
                                 Commencer
                             </Text>

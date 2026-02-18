@@ -35,7 +35,7 @@ export const migrations = [
     {
         version: 2,
         up: `
-
+      
       ALTER TABLE game_types ADD COLUMN modeCategory TEXT;
 
       CREATE TABLE IF NOT EXISTS player_game (
@@ -132,5 +132,15 @@ export const migrations = [
       CREATE INDEX IF NOT EXISTS idx_games_gameTypeId ON games(gameTypeId);
 
     `,
+    },
+    {
+        version: 3,
+        up: `
+    INSERT OR IGNORE INTO game_types (id, name) VALUES (1, 'X01');
+    INSERT OR IGNORE INTO game_types (id, name) VALUES (2, 'Cricket');
+    INSERT OR IGNORE INTO game_types (id, name) VALUES (3, 'Cricket Cut Throat');
+    INSERT OR IGNORE INTO game_types (id, name) VALUES (4, 'Around the Clock');
+    INSERT OR IGNORE INTO game_types (id, name) VALUES (5, 'Killer');
+  `,
     },
 ];

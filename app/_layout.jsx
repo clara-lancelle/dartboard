@@ -27,6 +27,7 @@ export default function RootLayout() {
                     name="ParamGameScreen"
                     options={{ title: "Paramètres de la partie" }}
                 />
+                <Stack.Screen name="GameScreen" options={{ title: "Partie" }} />
             </Stack>
             <StatusBar style="dark" />
         </>
