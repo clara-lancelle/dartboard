@@ -134,3 +134,16 @@ export const getFullGameById = async (gameId) => {
 
     return { game, players, currentLeg };
 };
+
+export const markGameAsWon = async (gameId, winnerId) => {
+    const now = new Date().toISOString();
+    return await db.runAsync(
+        `
+    UPDATE game
+    SET ended_at = ?,
+        winnerId = ?
+    WHERE id = ?
+    `,
+        [now, winnerId, gameId],
+    );
+};

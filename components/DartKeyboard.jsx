@@ -85,12 +85,14 @@ export default function DartKeyboard({ onValidateTurn }) {
                 ))}
 
                 {/* Bull */}
-                <TouchableOpacity
-                    onPress={() => handleNumberPress(25)}
-                    className="w-14 h-14 bg-green-700 m-1 rounded-lg items-center justify-center"
-                >
-                    <Text className="text-white font-bold">Bull</Text>
-                </TouchableOpacity>
+                {multiplier !== 3 && (
+                    <TouchableOpacity
+                        onPress={() => handleNumberPress(25)}
+                        className="w-14 h-14 bg-green-700 m-1 rounded-lg items-center justify-center"
+                    >
+                        <Text className="text-white font-bold">Bull</Text>
+                    </TouchableOpacity>
+                )}
             </View>
 
             {/* Undo */}

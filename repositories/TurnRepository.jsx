@@ -10,7 +10,6 @@ export const createTurn = async ({
     remainingScoreAfter,
 }) => {
     const now = new Date().toISOString();
-
     const turnResult = await db.runAsync(
         `
     INSERT INTO turns
