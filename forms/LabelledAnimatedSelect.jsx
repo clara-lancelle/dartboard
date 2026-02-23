@@ -44,7 +44,7 @@ export default function LabelledAnimatedSelect({
                 {placeholder}
             </Text>
             <TouchableOpacity
-                className="bg-white border-gray-200 border-2 border-solid p-4 rounded-xl flex-row justify-between items-center"
+                className="bg-white border-gray-200 border-2 border-solid p-3 rounded-xl flex-row justify-between items-center"
                 onPress={toggle}
             >
                 {selected && <Text className="text-gray-900">{selected}</Text>}
@@ -62,10 +62,10 @@ export default function LabelledAnimatedSelect({
                 style={animatedStyle}
             >
                 <ScrollView>
-                    {options.map((option, index) => (
+                    {options.map((option) => (
                         <TouchableOpacity
                             key={`${placeholder}-${option}`}
-                            className="p-4 border-b border-gray-700 "
+                            className="p-2 border-b border-gray-700 "
                             onPress={() => {
                                 onSelect(option);
                                 toggle();

@@ -15,7 +15,11 @@ const avatarImages = {
     avatar12: require("../assets/avatars/avatar12.png"),
 };
 
-export default function AvatarComponent({ avatar, width = 24 }) {
+export default function AvatarComponent({
+    avatar,
+    width = 24,
+    marginRight = 8,
+}) {
     return (
         <Image
             source={avatarImages[avatar] || ""}
@@ -23,7 +27,7 @@ export default function AvatarComponent({ avatar, width = 24 }) {
                 width: `${width}`,
                 height: `${width}`,
                 borderRadius: 12,
-                marginRight: 8,
+                marginRight: `${marginRight}`,
                 contentFit: "cover",
             }}
         />

@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
+import AvatarComponent from "../components/AvatarComponent";
 import DartKeyboard from "../components/DartKeyboard";
 import { useGameTimer } from "../hooks/useGameTimer";
 import * as DartRepository from "../repositories/DartRepository";
@@ -36,7 +37,7 @@ const GameScreen = () => {
     const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const [turnNumber, setTurnNumber] = useState({});
-    const [darts, setDarts] = useState({});
+    const [darts, setDarts] = useState([]); //max 3
     const { seconds } = useGameTimer();
     const [currentLegOrder, setCurrentLegOrder] = useState(0);
     const [currentSetOrder, setCurrentSetOrder] = useState(0);
@@ -213,50 +214,71 @@ const GameScreen = () => {
     }
 
     return (
-        <ScrollView className="flex-1 bg-[#6A5AE0] px-4 pt-10">
+        <ScrollView className="flex-1 bg-[#EFEEFC]">
             {/* Header */}
-            <View className="flex-row gap-5 justify-evenly">
-                <View className="flex justify-center items-center">
+            <View className="flex-row bg-[#6A5AE0] rounded-b-2xl py-8 px-2 w-[99%] mx-auto">
+                <View className="flex justify-center items-center w-1/3 border-slate-300 border-r-[1px]">
                     <Ionicons
                         name="stopwatch-outline"
                         color="#FFFFFF"
-                        size={24}
+                        size={22}
                     />
-                    <Text className="text-2xl font-bold text-white">
+                    <Text className="text-2xl font-bold text-white pt-1">
                         {formatTime(seconds)}
                     </Text>
                 </View>
-                <View className="flex justify-center items-center">
-                    <Ionicons name="golf-outline" color="#FFFFFF" size={24} />
-                    <Text className="text-2xl font-bold text-white">
+                <View className="flex justify-center items-center w-1/3 border-slate-300 border-r-[1px]">
+                    <Ionicons name="golf-outline" color="#FFFFFF" size={22} />
+                    <Text className="text-2xl font-bold text-white pt-1">
                         {currentSetOrder} / {game.setsNumber}
                     </Text>
                 </View>
-                <View className="flex justify-center items-center">
-                    <Ionicons name="pin-outline" color="#FFFFFF" size={24} />
-                    <Text className="text-2xl font-bold text-white">
+                <View className="flex justify-center items-center w-1/3">
+                    <Ionicons name="pin-outline" color="#FFFFFF" size={22} />
+                    <Text className="text-2xl font-bold text-white pt-1">
                         {currentLegOrder} / {game.legsNumber}
-                        {console.log(currentLeg)}
                     </Text>
                 </View>
             </View>
 
-            <View>
+            <View className="mt-2 p-4">
                 {players.map((item, index) => {
                     const isCurrent = index === currentPlayerIndex;
                     return (
                         <View
                             key={item.id}
-                            className={`p-4 mb-3 rounded-xl ${
-                                isCurrent ? "bg-green-600" : "bg-gray-800"
+                            className={`p-4 mb-3 rounded-2xl flex-row justify-between align-middle items-center ${
+                                isCurrent ? "bg-[#FFB380]" : "bg-white"
                             }`}
                         >
-                            <Text className="text-white text-lg font-semibold">
-                                {item.name}
-                            </Text>
+                            <View className="items-center justify-center ">
+                                <AvatarComponent
+                                    avatar={item.avatar}
+                                    width={40}
+                                    marginRight={0}
+                                />
+                                <Text className="text-gray-700 text-lg font-normal">
+                                    {item.name}
+                                </Text>
+                            </View>
 
-                            <Text className="text-white text-xl mt-2">
-                                Score: {scores[item.id]}
+                            <View className="flex-row justify-center items-center">
+                                {Array.from({ length: 3 }).map((_, i) => (
+                                    <View
+                                        key={i}
+                                        className="w-10 h-10 bg-gray-800 rounded-lg mx-2 items-center justify-center"
+                                    >
+                                        <Text className="text-white text-base">
+                                            {darts[i]
+                                                ? `${darts[i].multiplier}x${darts[i].number}`
+                                                : "-"}
+                                        </Text>
+                                    </View>
+                                ))}
+                            </View>
+
+                            <Text className="text-gray-800 text-2xl font-semibold">
+                                {scores[item.id]}
                             </Text>
                         </View>
                     );
@@ -264,6 +286,8 @@ const GameScreen = () => {
             </View>
 
             <DartKeyboard
+                darts={darts}
+                setDarts={setDarts}
                 onValidateTurn={(darts, totalScore) => {
                     handleTurn(darts, totalScore);
                 }}

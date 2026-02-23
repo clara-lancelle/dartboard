@@ -1,9 +1,9 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
 export default function DartKeyboard({ onValidateTurn }) {
     const [multiplier, setMultiplier] = useState(1);
-    const [darts, setDarts] = useState([]); //max 3
 
     const numbers = Array.from({ length: 21 }, (_, i) => i); // 0 → 20
 
@@ -20,7 +20,6 @@ export default function DartKeyboard({ onValidateTurn }) {
                 score,
             },
         ];
-
         setDarts(newDarts);
 
         // Reset multiplier après chaque fléchette
@@ -38,49 +37,16 @@ export default function DartKeyboard({ onValidateTurn }) {
     };
 
     return (
-        <View className="mt-4">
-            {/* Multipliers */}
-            <View className="flex-row justify-center mb-3">
-                {[1, 2, 3].map((m) => (
-                    <TouchableOpacity
-                        key={m}
-                        onPress={() => setMultiplier(m)}
-                        className={`px-4 py-2 mx-2 rounded-lg ${
-                            multiplier === m ? "bg-red-600" : "bg-gray-700"
-                        }`}
-                    >
-                        <Text className="text-white font-bold">
-                            {m === 1 ? "Simple" : m === 2 ? "Double" : "Triple"}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
-            {/* Darts en cours */}
-            <View className="flex-row justify-center mb-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                    <View
-                        key={i}
-                        className="w-16 h-16 bg-gray-800 rounded-lg mx-2 items-center justify-center"
-                    >
-                        <Text className="text-white text-lg">
-                            {darts[i]
-                                ? `${darts[i].multiplier}x${darts[i].number}`
-                                : "-"}
-                        </Text>
-                    </View>
-                ))}
-            </View>
-
+        <View className="my-4 mx-1 rounded-t-2xl bg-[#6A5AE0] p-4">
             {/* Numéros */}
             <View className="flex-row flex-wrap justify-center">
                 {numbers.map((num) => (
                     <TouchableOpacity
                         key={num}
                         onPress={() => handleNumberPress(num)}
-                        className="w-14 h-14 bg-blue-700 m-1 rounded-lg items-center justify-center"
+                        className="w-14 h-14 bg-white m-1 rounded-lg items-center justify-center"
                     >
-                        <Text className="text-white font-bold">{num}</Text>
+                        <Text className="text-gray-900 font-bold">{num}</Text>
                     </TouchableOpacity>
                 ))}
 
@@ -93,17 +59,35 @@ export default function DartKeyboard({ onValidateTurn }) {
                         <Text className="text-white font-bold">Bull</Text>
                     </TouchableOpacity>
                 )}
+                {/* Undo */}
+                <TouchableOpacity
+                    onPress={handleUndo}
+                    className="w-14 h-14 bg-gray-600 m-1 rounded-lg items-center justify-center"
+                >
+                    <Ionicons
+                        name="backspace-outline"
+                        size={24}
+                        color={"#fff"}
+                    />
+                </TouchableOpacity>
             </View>
 
-            {/* Undo */}
-            <TouchableOpacity
-                onPress={handleUndo}
-                className="mt-3 bg-gray-600 py-3 rounded-lg"
-            >
-                <Text className="text-white text-center font-bold">
-                    Annuler dernière fléchette
-                </Text>
-            </TouchableOpacity>
+            {/* Multipliers */}
+            <View className="flex-row justify-center mb-3">
+                {[1, 2, 3].map((m) => (
+                    <TouchableOpacity
+                        key={m}
+                        onPress={() => setMultiplier(m)}
+                        className={`p-4 m-2 rounded-lg ${
+                            multiplier === m ? "bg-red-600" : "bg-gray-700"
+                        }`}
+                    >
+                        <Text className="text-white font-bold">
+                            {m === 1 ? "Simple" : m === 2 ? "Double" : "Triple"}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
         </View>
     );
 }
