@@ -68,7 +68,7 @@ export default function PlayerMultiSelectWithToasts({ players, onChange }) {
     );
 
     return (
-        <GestureHandlerRootView className="w-full my-2">
+        <GestureHandlerRootView className="w-full self-center">
             {/* Selecteur */}
             <TouchableOpacity
                 className="bg-[#845AE9] text-white p-4 rounded-xl flex-row justify-between align-middle items-center"

@@ -1,21 +1,25 @@
 import { useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+    Image,
     ImageBackground,
-    Pressable,
+    ScrollView,
     Text,
     TouchableOpacity,
     View,
 } from "react-native";
 import BtnBgGradient from "../assets/btn_gradient_bg.png";
+import BtnAddUser from "../assets/icons/plus.png";
+import BtnCloseAddUser from "../assets/icons/verifie.png";
 import ParamGameBg from "../assets/param_game_bg.png";
 import AnimatedSelect from "../forms/AnimatedSelect";
 import LabelledAnimatedSelect from "../forms/LabelledAnimatedSelect";
+import PlayerForm from "../forms/PlayerForm";
 import PlayerMultiSelect from "../forms/PlayerMultiSelect";
 import SwitchOption from "../forms/SwitchOption";
 import * as GameRepository from "../repositories/GameRepository";
 import { getAllGameTypes } from "../repositories/GameTypeRepository";
-import { getPlayers } from "../repositories/PlayerRepository";
+import { createPlayer, getPlayers } from "../repositories/PlayerRepository";
 import { validateGame } from "../validations/ValidateGame";
 
 export default function ParamGameScreen() {
@@ -34,6 +38,7 @@ export default function ParamGameScreen() {
     const [selectedNumSets, setSelectedNumSets] = useState(1);
     const [randomFirstPlayer, setRandomFirstPlayer] = useState(true);
     const [error, setError] = useState("");
+    const [showPlayerForm, setShowPLayerForm] = useState(false);
 
     const checkOptions = ["Straight", "Double", "Master", "Tous"];
     const legsOptions = [1, 3, 5, 7];
@@ -89,6 +94,19 @@ export default function ParamGameScreen() {
         value: g.id,
     }));
 
+    //creation de joueurs si il n'y en a pas en bdd
+    // Handle création d'un joueur
+    const handleCreate = async (playerName, avatar) => {
+        try {
+            await createPlayer({ name: playerName, avatar });
+            setShowPLayerForm(false);
+            const data = await getPlayers();
+            setPlayers(data);
+        } catch (error) {
+            console.error("Error while creating player:", error);
+        }
+    };
+
     return (
         <ImageBackground
             source={ParamGameBg}
@@ -96,7 +114,7 @@ export default function ParamGameScreen() {
             resizeMode="cover"
             className=""
         >
-            <View className="flex-1 p-4">
+            <ScrollView className="flex-1 p-4">
                 <AnimatedSelect
                     options={gameTypeOptions}
                     selected={selectedGameType}
@@ -152,25 +170,52 @@ export default function ParamGameScreen() {
                         {error}
                     </Text>
                 ) : null}
-                <PlayerMultiSelect
-                    players={players}
-                    selectedPlayers={selectedPlayers}
-                    onChange={setSelectedPlayers}
-                />
-                <TouchableOpacity className="mt-auto mb-24 items-center">
+
+                <View className="flex-row flex-wrap items-start gap-x-2">
+                    {players.length !== 0 && (
+                        <PlayerMultiSelect
+                            players={players}
+                            selectedPlayers={selectedPlayers}
+                            onChange={setSelectedPlayers}
+                        />
+                    )}
+                    <TouchableOpacity
+                        onPress={() => setShowPLayerForm((prev) => !prev)}
+                        className="items-center mx-2 rounded-full"
+                    >
+                        <Image
+                            source={
+                                showPlayerForm ? BtnCloseAddUser : BtnAddUser
+                            }
+                            contentFit="cover"
+                            style={{
+                                width: 50,
+                                height: 50,
+                            }}
+                        />
+                    </TouchableOpacity>
+                    {showPlayerForm && (
+                        <View className="w-[100%] self-start">
+                            <PlayerForm onSubmit={handleCreate} size="small" />
+                        </View>
+                    )}
+                </View>
+
+                <TouchableOpacity
+                    onPress={OnStartPress}
+                    className="mt-2 mb-16 items-center"
+                >
                     <ImageBackground
                         source={BtnBgGradient}
                         resizeMode="cover"
                         className="self-center px-14 py-6 rounded-full overflow-hidden"
                     >
-                        <Pressable onPress={OnStartPress}>
-                            <Text className="font-medium text-lg text-white text-center">
-                                Commencer
-                            </Text>
-                        </Pressable>
+                        <Text className="font-medium text-lg text-white text-center">
+                            Commencer
+                        </Text>
                     </ImageBackground>
                 </TouchableOpacity>
-            </View>
+            </ScrollView>
         </ImageBackground>
     );
 }

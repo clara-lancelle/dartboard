@@ -15,10 +15,12 @@ const avatarImages = {
     avatar12: require("../assets/avatars/avatar12.png"),
 };
 
-export default function AvatarSelector({ selected, onSelect }) {
+export default function AvatarSelector({ selected, onSelect, size = "" }) {
     return (
         <View>
-            <View className="flex-row mb-4 flex-wrap gap-4 justify-center">
+            <View
+                className={`flex-row mb-4 flex-wrap justify-center ${size === "small" ? "gap-1" : "gap-4"}`}
+            >
                 {Object.entries(avatarImages).map(([id, path]) => {
                     const isSelected = selected === id;
                     return (
@@ -33,7 +35,7 @@ export default function AvatarSelector({ selected, onSelect }) {
                         >
                             <Image
                                 source={path}
-                                className="w-16 h-16 rounded-full grayscale"
+                                className={`${size === "small" ? "w-14 h-14" : "w-16 h-16"}  rounded-full grayscale`}
                             />
                         </Pressable>
                     );

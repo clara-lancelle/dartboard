@@ -1,50 +1,60 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
+    Image,
     ImageBackground,
     Pressable,
     Text,
     TextInput,
+    TouchableOpacity,
     View,
 } from "react-native";
 import BtnBgLinear from "../assets/bg_linear_orange.png";
+import BtnBack from "../assets/icons/back.png";
 import { validatePlayer } from "../validations/ValidatePlayer";
 import AvatarSelector from "./AvatarSelector";
 
-export default function PlayerForm({ onSubmit, onDismiss }) {
+export default function PlayerForm({ onSubmit, onDismiss = false, size = "" }) {
     const [playerName, setPlayerName] = useState("");
     const [avatar, setAvatar] = useState(null);
     const [error, setError] = useState("");
     return (
-        <View className="bg-white my-4 w-11/12 rounded-xl p-4">
-            <View className="flex-row w-full justify-between">
-                <Text>Pseudo</Text>
-                <Pressable onPress={onDismiss}>
-                    <Ionicons
-                        name="arrow-back-outline"
-                        color="#6A5EEA"
-                        size={30}
+        <View
+            className={`bg-white border-2 border-gray-200 w-11/12 rounded-xl mx-auto ${size === "small" ? "p-3 mb-4" : "p-4 my-4"}`}
+        >
+            {onDismiss !== false && (
+                <Pressable className="mb-4" onPress={onDismiss}>
+                    <Image
+                        source={BtnBack}
+                        contentFit="cover"
+                        style={{
+                            width: 40,
+                            height: 40,
+                        }}
                     />
                 </Pressable>
-            </View>
+            )}
+
             <TextInput
                 value={playerName}
                 onChangeText={setPlayerName}
-                className="bg-white p-3 rounded-xl mb-4"
                 placeholder="Pseudo du joueur"
+                className={`bg-[#EFEEFC] text-[#6A5AE0] placeholder:text-[#6A5AE0] p-4 rounded-xl mb-4`}
             />
             {error ? (
                 <Text className="text-red-500 text-xs self-center">
                     {error}
                 </Text>
             ) : null}
-            <Text className="mb-2">Avatar</Text>
-            <AvatarSelector selected={avatar} onSelect={setAvatar} />
+            <AvatarSelector
+                selected={avatar}
+                onSelect={setAvatar}
+                size="small"
+            />
             <ImageBackground
-                className="w-1/3 p-3 rounded-3xl items-center self-end overflow-hidden"
+                className="w-1/3 py-4 rounded-3xl items-center border-2 border-gray-200 self-end overflow-hidden"
                 source={BtnBgLinear}
             >
-                <Pressable
+                <TouchableOpacity
                     className="rounded-full"
                     onPress={() => {
                         const validationError = validatePlayer(playerName, {
@@ -58,10 +68,10 @@ export default function PlayerForm({ onSubmit, onDismiss }) {
                         onSubmit(playerName, avatar);
                     }}
                 >
-                    <Text className="text-white font-semibold text-sm">
+                    <Text className="text-white font-semibold text-base">
                         Ajouter
                     </Text>
-                </Pressable>
+                </TouchableOpacity>
             </ImageBackground>
         </View>
     );
