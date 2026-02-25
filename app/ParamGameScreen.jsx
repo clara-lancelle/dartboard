@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import BtnBgGradient from "../assets/btn_gradient_bg.png";
 import BtnAddUser from "../assets/icons/plus.png";
-import BtnCloseAddUser from "../assets/icons/verifie.png";
+import BtnCloseAddUser from "../assets/icons/up-arrow.png";
 import ParamGameBg from "../assets/param_game_bg.png";
 import AnimatedSelect from "../forms/AnimatedSelect";
 import LabelledAnimatedSelect from "../forms/LabelledAnimatedSelect";

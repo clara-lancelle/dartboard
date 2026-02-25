@@ -40,7 +40,7 @@ export default function PlayerList({ players, onUpdatePress, onDeletePress }) {
                     ({ avatar, name, id, created_at_formatted, ...rest }) =>
                         (editingPlayerId !== id ? (
                             <View
-                                key={id}
+                                key={`${id} - notediting`}
                                 className="h-20 bg-white w-full items-center rounded-xl flex justify-between flex-row gap-4"
                             >
                                 <View className="flex-row items-center gap-4 px-4">

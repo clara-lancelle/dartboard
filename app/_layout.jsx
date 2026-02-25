@@ -21,7 +21,15 @@ export default function RootLayout() {
     }, []);
     return (
         <>
-            <Stack>
+            <Stack
+                screenOptions={{
+                    headerStyle: {
+                        backgroundColor: "#6A5AE0",
+                    },
+                    headerTintColor: "#fff",
+                    headerShadowVisible: true,
+                }}
+            >
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen
                     name="ParamGameScreen"
@@ -29,7 +37,7 @@ export default function RootLayout() {
                 />
                 <Stack.Screen name="GameScreen" options={{ title: "Partie" }} />
             </Stack>
-            <StatusBar style="dark" />
+            <StatusBar style="light" />
         </>
     );
 }

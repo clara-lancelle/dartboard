@@ -3,14 +3,12 @@ import { useRoute } from "@react-navigation/native";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
 import AvatarComponent from "../components/AvatarComponent";
-import DartKeyboard from "../components/DartKeyboard";
-import { useGameTimer } from "../hooks/useGameTimer";
+import DartKeyboard from "../forms/DartKeyboard";
 import * as DartRepository from "../repositories/DartRepository";
 import * as GameRepository from "../repositories/GameRepository";
 import * as LegRepository from "../repositories/LegRepository";
 import * as SetRepository from "../repositories/SetRepository";
 import { createTurn } from "../repositories/TurnRepository";
-import { formatTime } from "../utils/timeFormatter";
 /*  TO DO 
 
 - Voir pour autres modes de jeu,
@@ -38,7 +36,7 @@ const GameScreen = () => {
     const [loading, setLoading] = useState(true);
     const [turnNumber, setTurnNumber] = useState({});
     const [darts, setDarts] = useState([]); //max 3
-    const { seconds } = useGameTimer();
+    //const { seconds } = useGameTimer();
     const [currentLegOrder, setCurrentLegOrder] = useState(0);
     const [currentSetOrder, setCurrentSetOrder] = useState(0);
     const [countLegWinsForPlayer, setCountLegWinsForPlayer] = useState({});
@@ -223,9 +221,9 @@ const GameScreen = () => {
                         color="#FFFFFF"
                         size={22}
                     />
-                    <Text className="text-2xl font-bold text-white pt-1">
+                    {/*<Text className="text-2xl font-bold text-white pt-1">
                         {formatTime(seconds)}
-                    </Text>
+                    </Text>*/}
                 </View>
                 <View className="flex justify-center items-center w-1/3 border-slate-300 border-r-[1px]">
                     <Ionicons name="golf-outline" color="#FFFFFF" size={22} />

@@ -2,9 +2,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
-export default function DartKeyboard({ onValidateTurn }) {
+export default function DartKeyboard({ onValidateTurn, darts, setDarts }) {
     const [multiplier, setMultiplier] = useState(1);
-
+    console.log(darts);
     const numbers = Array.from({ length: 21 }, (_, i) => i); // 0 → 20
 
     const handleNumberPress = (number) => {
