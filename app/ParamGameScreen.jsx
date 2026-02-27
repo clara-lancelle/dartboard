@@ -1,4 +1,4 @@
-import { useNavigation } from "expo-router";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import {
     Image,
@@ -10,12 +10,11 @@ import {
 } from "react-native";
 import BtnBgGradient from "../assets/btn_gradient_bg.png";
 import BtnAddUser from "../assets/icons/plus.png";
-import BtnCloseAddUser from "../assets/icons/up-arrow.png";
 import ParamGameBg from "../assets/param_game_bg.png";
 import AnimatedSelect from "../forms/AnimatedSelect";
 import LabelledAnimatedSelect from "../forms/LabelledAnimatedSelect";
-import PlayerForm from "../forms/PlayerForm";
 import PlayerMultiSelect from "../forms/PlayerMultiSelect";
+import PlayerToast from "../forms/PlayerToast";
 import SwitchOption from "../forms/SwitchOption";
 import * as GameRepository from "../repositories/GameRepository";
 import { getAllGameTypes } from "../repositories/GameTypeRepository";
@@ -38,13 +37,13 @@ export default function ParamGameScreen() {
     const [selectedNumSets, setSelectedNumSets] = useState(1);
     const [randomFirstPlayer, setRandomFirstPlayer] = useState(true);
     const [error, setError] = useState("");
-    const [showPlayerForm, setShowPLayerForm] = useState(false);
-
     const checkOptions = ["Straight", "Double", "Master", "Tous"];
     const legsOptions = [1, 3, 5, 7];
     const setsOptions = [1, 3, 5];
     const x01Options = [101, 201, 301, 401, 501, 601, 701, 801, 901, 1001];
+    const { newPlayer } = useLocalSearchParams();
 
+    console.log(newPlayer);
     const OnStartPress = async () => {
         try {
             setError(""); // reset
@@ -94,12 +93,19 @@ export default function ParamGameScreen() {
         value: g.id,
     }));
 
+    useEffect(() => {
+        if (newPlayer) {
+            const parsed = JSON.parse(newPlayer);
+            console.log("here : ", parsed);
+            handleCreate(parsed.name, parsed.avatar);
+        }
+    }, [newPlayer]);
+
     //creation de joueurs si il n'y en a pas en bdd
     // Handle création d'un joueur
     const handleCreate = async (playerName, avatar) => {
         try {
             await createPlayer({ name: playerName, avatar });
-            setShowPLayerForm(false);
             const data = await getPlayers();
             setPlayers(data);
         } catch (error) {
@@ -171,22 +177,20 @@ export default function ParamGameScreen() {
                     </Text>
                 ) : null}
 
-                <View className="flex-row flex-wrap items-start gap-x-2">
+                <View className="flex-row flex-wrap gap-x-2">
                     {players.length !== 0 && (
                         <PlayerMultiSelect
                             players={players}
                             selectedPlayers={selectedPlayers}
-                            onChange={setSelectedPlayers}
+                            setSelectedPlayers={setSelectedPlayers}
                         />
                     )}
                     <TouchableOpacity
-                        onPress={() => setShowPLayerForm((prev) => !prev)}
+                        onPress={() => router.push("PlayerModal")}
                         className="items-center mx-2 rounded-full"
                     >
                         <Image
-                            source={
-                                showPlayerForm ? BtnCloseAddUser : BtnAddUser
-                            }
+                            source={BtnAddUser}
                             contentFit="cover"
                             style={{
                                 width: 50,
@@ -194,16 +198,20 @@ export default function ParamGameScreen() {
                             }}
                         />
                     </TouchableOpacity>
-                    {showPlayerForm && (
-                        <View className="w-[100%] self-start">
-                            <PlayerForm onSubmit={handleCreate} size="small" />
+
+                    {selectedPlayers.length !== 0 && (
+                        <View width="100%">
+                            <PlayerToast
+                                selectedPlayers={selectedPlayers}
+                                setSelectedPlayers={setSelectedPlayers}
+                            />
                         </View>
                     )}
                 </View>
 
                 <TouchableOpacity
                     onPress={OnStartPress}
-                    className="mt-2 mb-16 items-center"
+                    className="mt-14 mb-16 items-center"
                 >
                     <ImageBackground
                         source={BtnBgGradient}

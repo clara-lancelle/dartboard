@@ -2,9 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
-export default function DartKeyboard({ onValidateTurn, darts, setDarts }) {
+export default function DartKeyboard({
+    currentPlayer,
+    onValidateTurn,
+    darts,
+    setDarts,
+}) {
     const [multiplier, setMultiplier] = useState(1);
-    console.log(darts);
     const numbers = Array.from({ length: 21 }, (_, i) => i); // 0 → 20
 
     const handleNumberPress = (number) => {
@@ -12,22 +16,31 @@ export default function DartKeyboard({ onValidateTurn, darts, setDarts }) {
 
         const score = number * multiplier;
 
-        const newDarts = [
-            ...darts,
-            {
-                number,
-                multiplier,
-                score,
-            },
-        ];
-        setDarts(newDarts);
+        setDarts((prev) => {
+            const currentDarts = prev[currentPlayer] || [];
+            return {
+                ...prev,
+                [currentPlayer]: [
+                    ...currentDarts,
+                    {
+                        number,
+                        multiplier,
+                        score,
+                    },
+                ],
+            };
+        });
 
+        console.log("tutu", darts[currentPlayer]);
         // Reset multiplier après chaque fléchette
         setMultiplier(1);
 
-        if (newDarts.length === 3) {
-            const total = newDarts.reduce((sum, d) => sum + d.score, 0);
-            onValidateTurn(newDarts, total);
+        if (darts[currentPlayer] && darts[currentPlayer].length === 3) {
+            const total = darts[currentPlayer].reduce(
+                (sum, d) => sum + d.score,
+                0,
+            );
+            onValidateTurn(darts, total);
             setDarts([]);
         }
     };

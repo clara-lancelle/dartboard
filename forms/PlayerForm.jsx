@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
     Image,
     ImageBackground,
-    Pressable,
     Text,
     TextInput,
     TouchableOpacity,
@@ -22,7 +21,7 @@ export default function PlayerForm({ onSubmit, onDismiss = false, size = "" }) {
             className={`bg-white border-2 border-gray-200 w-11/12 rounded-xl mx-auto ${size === "small" ? "p-3 mb-4" : "p-4 my-4"}`}
         >
             {onDismiss !== false && (
-                <Pressable className="mb-4" onPress={onDismiss}>
+                <TouchableOpacity className="mb-4" onPress={onDismiss}>
                     <Image
                         source={BtnBack}
                         contentFit="cover"
@@ -31,7 +30,7 @@ export default function PlayerForm({ onSubmit, onDismiss = false, size = "" }) {
                             height: 40,
                         }}
                     />
-                </Pressable>
+                </TouchableOpacity>
             )}
 
             <TextInput

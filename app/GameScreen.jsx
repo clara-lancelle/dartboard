@@ -35,7 +35,7 @@ const GameScreen = () => {
     const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const [turnNumber, setTurnNumber] = useState({});
-    const [darts, setDarts] = useState([]); //max 3
+    const [darts, setDarts] = useState({}); //max 3
     //const { seconds } = useGameTimer();
     const [currentLegOrder, setCurrentLegOrder] = useState(0);
     const [currentSetOrder, setCurrentSetOrder] = useState(0);
@@ -55,7 +55,6 @@ const GameScreen = () => {
             setGame(game);
             setPlayers(players);
             setCurrentLeg(currentLeg);
-            console.log(currentLeg.setId);
 
             // Initialisation des scores
             const initialScores = {};
@@ -78,7 +77,7 @@ const GameScreen = () => {
     /* Gestion tour - flechettes */
     const handleTurn = async (darts, turnScore) => {
         if (!game || !currentLeg) return;
-
+        console.log(turnScore);
         const currentPlayer = players[currentPlayerIndex];
         const currentScore = scores[currentPlayer.id];
         const remainingScoreAfter = currentScore - turnScore;
@@ -112,7 +111,7 @@ const GameScreen = () => {
                 remainingScoreAfter: remainingScoreAfter,
             });
             if (turnId) {
-                darts.forEach((item) =>
+                darts[currentPlayerIndex].forEach((item) =>
                     DartRepository.createDart({
                         turnId: turnId,
                         segment: item.number,
@@ -267,9 +266,11 @@ const GameScreen = () => {
                                         className="w-10 h-10 bg-gray-800 rounded-lg mx-2 items-center justify-center"
                                     >
                                         <Text className="text-white text-base">
-                                            {darts[i]
-                                                ? `${darts[i].multiplier}x${darts[i].number}`
-                                                : "-"}
+                                            {darts[index] &&
+                                                darts[index].forEach(
+                                                    (dart) =>
+                                                        `${dart.multiplier}x${dart.number}`,
+                                                )}
                                         </Text>
                                     </View>
                                 ))}
@@ -284,6 +285,7 @@ const GameScreen = () => {
             </View>
 
             <DartKeyboard
+                currentPlayer={currentPlayerIndex}
                 darts={darts}
                 setDarts={setDarts}
                 onValidateTurn={(darts, totalScore) => {

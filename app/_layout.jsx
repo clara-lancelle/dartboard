@@ -36,6 +36,13 @@ export default function RootLayout() {
                     options={{ title: "Paramètres de la partie" }}
                 />
                 <Stack.Screen name="GameScreen" options={{ title: "Partie" }} />
+                <Stack.Screen
+                    name="PlayerModal"
+                    options={{
+                        presentation: "transparentModal",
+                        headerShown: false,
+                    }}
+                />
             </Stack>
             <StatusBar style="light" />
         </>

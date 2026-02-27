@@ -1,9 +1,5 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
-import DraggableFlatList, {
-    ScaleDecorator,
-} from "react-native-draggable-flatlist";
+import { ScrollView, Text, TouchableOpacity } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, {
     useAnimatedStyle,
@@ -12,8 +8,11 @@ import Animated, {
 } from "react-native-reanimated";
 import AvatarComponent from "../components/AvatarComponent";
 
-export default function PlayerMultiSelectWithToasts({ players, onChange }) {
-    const [selectedPlayers, setSelectedPlayers] = useState([]);
+export default function PlayerMultiSelectWithToasts({
+    players,
+    selectedPlayers,
+    setSelectedPlayers,
+}) {
     const [open, setOpen] = useState(false);
 
     // Animation pour le dropdown
@@ -41,31 +40,9 @@ export default function PlayerMultiSelectWithToasts({ players, onChange }) {
             } else {
                 newList = [...prev, player];
             }
-            onChange?.(newList);
             return newList;
         });
     };
-
-    const renderToast = ({ item, drag, isActive }) => (
-        <ScaleDecorator>
-            <TouchableOpacity
-                onLongPress={drag}
-                className={`px-2 py-2 rounded-lg mb-2 flex-row align-middle gap-1 ${
-                    isActive ? "bg-blue-300" : "bg-white"
-                }`}
-            >
-                <AvatarComponent avatar={item.avatar} />
-                <Text className="text-grey-900 font-semibold self-center">
-                    {item.name}
-                </Text>
-                <Ionicons
-                    name="reorder-three-outline"
-                    color="#D9D9D9"
-                    size={24}
-                />
-            </TouchableOpacity>
-        </ScaleDecorator>
-    );
 
     return (
         <GestureHandlerRootView className="w-full self-center">
@@ -84,12 +61,14 @@ export default function PlayerMultiSelectWithToasts({ players, onChange }) {
 
             {/* Dropdown */}
             <Animated.View
-                className="overflow-hidden mt-2 max-h-52 bg-[#845AE9] text-white rounded-xl"
+                className="overflow-hidden mt-2 max-h-48 bg-[#845AE9] text-white rounded-xl"
                 style={animatedStyle}
             >
                 <ScrollView
+                    className="flex-1"
                     showsVerticalScrollIndicator={true}
                     persistentScrollbar={true}
+                    nestedScrollEnabled={true}
                 >
                     {players.map((player) => (
                         <TouchableOpacity
@@ -107,21 +86,6 @@ export default function PlayerMultiSelectWithToasts({ players, onChange }) {
                     ))}
                 </ScrollView>
             </Animated.View>
-
-            {/* Toasts des joueurs sélectionnés */}
-            <View className="mt-3">
-                <DraggableFlatList
-                    data={selectedPlayers}
-                    keyExtractor={(item) => item.id}
-                    onDragEnd={({ data }) => {
-                        setSelectedPlayers(data);
-                        onChange?.(data);
-                    }}
-                    renderItem={renderToast}
-                    horizontal={true} // toasts horizontal
-                    contentContainerStyle={{ paddingHorizontal: 5, gap: 5 }}
-                />
-            </View>
         </GestureHandlerRootView>
     );
 }
