@@ -31,17 +31,16 @@ export default function DartKeyboard({
             };
         });
 
-        console.log("tutu", darts[currentPlayer]);
         // Reset multiplier après chaque fléchette
         setMultiplier(1);
 
-        if (darts[currentPlayer] && darts[currentPlayer].length === 3) {
+        if (darts[currentPlayer] && darts[currentPlayer].length === 2) {
             const total = darts[currentPlayer].reduce(
                 (sum, d) => sum + d.score,
                 0,
             );
             onValidateTurn(darts, total);
-            setDarts([]);
+            //setDarts([]);
         }
     };
 

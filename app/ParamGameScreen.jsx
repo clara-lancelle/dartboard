@@ -43,7 +43,6 @@ export default function ParamGameScreen() {
     const x01Options = [101, 201, 301, 401, 501, 601, 701, 801, 901, 1001];
     const { newPlayer } = useLocalSearchParams();
 
-    console.log(newPlayer);
     const OnStartPress = async () => {
         try {
             setError(""); // reset
@@ -96,7 +95,6 @@ export default function ParamGameScreen() {
     useEffect(() => {
         if (newPlayer) {
             const parsed = JSON.parse(newPlayer);
-            console.log("here : ", parsed);
             handleCreate(parsed.name, parsed.avatar);
         }
     }, [newPlayer]);

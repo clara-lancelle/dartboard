@@ -36,6 +36,7 @@ const GameScreen = () => {
     const [loading, setLoading] = useState(true);
     const [turnNumber, setTurnNumber] = useState({});
     const [darts, setDarts] = useState({}); //max 3
+    const [turnId, setTurnId] = useState();
     //const { seconds } = useGameTimer();
     const [currentLegOrder, setCurrentLegOrder] = useState(0);
     const [currentSetOrder, setCurrentSetOrder] = useState(0);
@@ -82,16 +83,15 @@ const GameScreen = () => {
         const currentScore = scores[currentPlayer.id];
         const remainingScoreAfter = currentScore - turnScore;
         const isBust = remainingScoreAfter < 0 ? true : false;
+        const newTurnNumber = (turnNumber[currentPlayer.id] ?? 0) + 1;
 
         setTurnNumber((prev) => {
             const currentTurn = prev[currentPlayer.id] ?? 0;
-
             return {
                 ...prev,
                 [currentPlayer.id]: currentTurn + 1,
             };
         });
-
         //bust
         if (!isBust) {
             // Update score
@@ -102,16 +102,23 @@ const GameScreen = () => {
         }
         //create
         try {
-            const turnId = await createTurn({
+            const createdTurnId = await createTurn({
                 legId: currentLeg,
                 playerId: currentPlayer,
-                turnNumber: turnNumber,
+                turnNumber: newTurnNumber,
                 totalScore: turnScore,
                 isBust: isBust,
                 remainingScoreAfter: remainingScoreAfter,
             });
+            setTurnId(createdTurnId);
+        } catch (e) {
+            console.log("createTurnError", e);
+            return;
+        }
+
+        try {
             if (turnId) {
-                darts[currentPlayerIndex].forEach((item) =>
+                darts[currentPlayerIndex].map((item) =>
                     DartRepository.createDart({
                         turnId: turnId,
                         segment: item.number,
@@ -122,7 +129,7 @@ const GameScreen = () => {
             }
             //DartRepository.getDartsByTurnId(turnId).then((darts) => {});
         } catch (e) {
-            console.log("createTurnError", e);
+            console.log("createDartError", e);
             return;
         }
 
@@ -260,20 +267,23 @@ const GameScreen = () => {
                             </View>
 
                             <View className="flex-row justify-center items-center">
-                                {Array.from({ length: 3 }).map((_, i) => (
-                                    <View
-                                        key={i}
-                                        className="w-10 h-10 bg-gray-800 rounded-lg mx-2 items-center justify-center"
-                                    >
-                                        <Text className="text-white text-base">
-                                            {darts[index] &&
-                                                darts[index].forEach(
-                                                    (dart) =>
-                                                        `${dart.multiplier}x${dart.number}`,
-                                                )}
-                                        </Text>
-                                    </View>
-                                ))}
+                                {Array.from({ length: 3 }).map((_, i) => {
+                                    const dart = darts[index]?.[i];
+
+                                    return (
+                                        <View
+                                            key={i}
+                                            className="w-10 h-10 bg-gray-800 rounded-lg mx-2 items-center justify-center"
+                                        >
+                                            {dart && (
+                                                <Text className="text-white text-base">
+                                                    {dart.multiplier}x
+                                                    {dart.number}
+                                                </Text>
+                                            )}
+                                        </View>
+                                    );
+                                })}
                             </View>
 
                             <Text className="text-gray-800 text-2xl font-semibold">

@@ -10,7 +10,7 @@ export const createDart = async ({ turnId, segment, multiplier, score }) => {
         `
     INSERT INTO darts
     (
-     turnId,
+    turnId,
     segment,
     multiplier,
     score,

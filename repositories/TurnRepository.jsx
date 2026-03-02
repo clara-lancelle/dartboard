@@ -27,7 +27,7 @@ export const createTurn = async ({
         [
             legId.id,
             playerId.id,
-            turnNumber[playerId.id],
+            turnNumber,
             totalScore,
             isBust ? 1 : 0,
             remainingScoreAfter,
@@ -43,7 +43,7 @@ export const createTurn = async ({
 
 //to fetch :
 /*
-TurnRepository.getTurnsByLegId(currentLeg.id).then((turns) => {
+TurnRep[playerId.id]ository.getTurnsByLegId(currentLeg.id).then((turns) => {
     console.log(turns);
 });
 */
