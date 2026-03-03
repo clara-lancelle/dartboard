@@ -3,8 +3,9 @@ import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
 export default function DartKeyboard({
-    currentPlayer,
+    currentPlayerIndex,
     onValidateTurn,
+    handleUndoLastTurnDarts,
     darts,
     setDarts,
 }) {
@@ -17,10 +18,10 @@ export default function DartKeyboard({
         const score = number * multiplier;
 
         setDarts((prev) => {
-            const currentDarts = prev[currentPlayer] || [];
+            const currentDarts = prev[currentPlayerIndex] || [];
             return {
                 ...prev,
-                [currentPlayer]: [
+                [currentPlayerIndex]: [
                     ...currentDarts,
                     {
                         number,
@@ -34,8 +35,11 @@ export default function DartKeyboard({
         // Reset multiplier après chaque fléchette
         setMultiplier(1);
 
-        if (darts[currentPlayer] && darts[currentPlayer].length === 2) {
-            const total = darts[currentPlayer].reduce(
+        if (
+            darts[currentPlayerIndex] &&
+            darts[currentPlayerIndex].length === 2
+        ) {
+            const total = darts[currentPlayerIndex].reduce(
                 (sum, d) => sum + d.score,
                 0,
             );
@@ -45,7 +49,17 @@ export default function DartKeyboard({
     };
 
     const handleUndo = () => {
-        setDarts((prev) => prev.slice(0, -1));
+        setDarts((prev) => {
+            const currentDarts = prev[currentPlayerIndex] || [];
+            if (currentDarts.length === 0) {
+                handleUndoLastTurnDarts();
+                return prev;
+            }
+            return {
+                ...prev,
+                [currentPlayerIndex]: currentDarts.slice(0, -1),
+            };
+        });
     };
 
     return (

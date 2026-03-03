@@ -6,7 +6,7 @@ import { db } from "../database/db";
 export const createDart = async ({ turnId, segment, multiplier, score }) => {
     const now = new Date().toISOString();
 
-    return await db.runAsync(
+    const dartId = await db.runAsync(
         `
     INSERT INTO darts
     (
@@ -20,6 +20,8 @@ export const createDart = async ({ turnId, segment, multiplier, score }) => {
     `,
         [turnId, segment, multiplier, score, now],
     );
+
+    return dartId.lastInsertRowId;
 };
 
 //UPDATE
@@ -30,7 +32,7 @@ export const updateDart = async (dartId, segment, multiplier, score) => {
     UPDATE darts
     SET segment = ? ,
     multiplier = ? ,
-    score = ? ,
+    score = ? 
     WHERE id = ?
     `,
         [segment, multiplier, score, dartId],
@@ -40,7 +42,7 @@ export const updateDart = async (dartId, segment, multiplier, score) => {
 export const getDartsByTurnId = async (turnId) => {
     return await db.getAllAsync(
         `
-    SELECT *
+    SELECT segment, multiplier, score
     FROM darts
     WHERE turnId = ?
     `,

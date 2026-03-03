@@ -38,12 +38,30 @@ export const createTurn = async ({
     return gameId;
 };
 
+export const updateTurn = async ({
+    turnId,
+    totalScore,
+    isBust,
+    remainingScoreAfter,
+}) => {
+    return await db.runAsync(
+        `
+    UPDATE turns
+    SET totalScore = ?,
+        isBust = ?,
+        remainingScoreAfter = ?
+    WHERE id = ?
+    `,
+        [totalScore, isBust ? 1 : 0, remainingScoreAfter, turnId],
+    );
+};
+
 //
 // READ - Tours d'un leg
 
 //to fetch :
 /*
-TurnRep[playerId.id]ository.getTurnsByLegId(currentLeg.id).then((turns) => {
+TurnRepository.getTurnsByLegId(currentLeg.id).then((turns) => {
     console.log(turns);
 });
 */
