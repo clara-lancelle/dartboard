@@ -13,39 +13,39 @@ export default function DartKeyboard({
     const numbers = Array.from({ length: 21 }, (_, i) => i); // 0 → 20
 
     const handleNumberPress = (number) => {
-        if (darts.length >= 3) return;
-
         const score = number * multiplier;
 
         setDarts((prev) => {
             const currentDarts = prev[currentPlayerIndex] || [];
+            if (currentDarts.length >= 3) return prev;
+
+            const newDarts = [
+                ...currentDarts,
+                {
+                    number,
+                    multiplier,
+                    score,
+                },
+            ];
+
+            // Si on vient d'ajouter la 3ème fléchette, déclencher la validation
+            if (newDarts.length === 3) {
+                handle3Darts(newDarts);
+            }
+
+            setMultiplier(1);
+
             return {
                 ...prev,
-                [currentPlayerIndex]: [
-                    ...currentDarts,
-                    {
-                        number,
-                        multiplier,
-                        score,
-                    },
-                ],
+                [currentPlayerIndex]: newDarts,
             };
         });
+    };
 
-        // Reset multiplier après chaque fléchette
-        setMultiplier(1);
-
-        if (
-            darts[currentPlayerIndex] &&
-            darts[currentPlayerIndex].length === 2
-        ) {
-            const total = darts[currentPlayerIndex].reduce(
-                (sum, d) => sum + d.score,
-                0,
-            );
-            onValidateTurn(darts, total);
-            //setDarts([]);
-        }
+    const handle3Darts = (playerDarts) => {
+        const total = playerDarts.reduce((sum, d) => sum + d.score, 0);
+        console.log("validate turn - darts", playerDarts, "total", total);
+        onValidateTurn(darts, total);
     };
 
     const handleUndo = () => {

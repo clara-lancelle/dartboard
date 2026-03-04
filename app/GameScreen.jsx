@@ -182,10 +182,6 @@ const GameScreen = () => {
             }
         }
 
-        DartRepository.getDartsByTurnId(turnId).then((item) => {
-            console.error("darts for turnId", item);
-        });
-
         //winner
         if (remainingScoreAfter === 0) {
             //gagne le leg
