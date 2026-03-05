@@ -4,6 +4,16 @@ import { db } from "../database/db";
 //segment = chiffre de 0-25
 //score = chiffre x multiplier
 export const createDart = async ({ turnId, segment, multiplier, score }) => {
+    console.log(
+        "createDart - turnId",
+        turnId,
+        "segment",
+        segment,
+        "multiplier",
+        multiplier,
+        "score",
+        score,
+    );
     const now = new Date().toISOString();
 
     const dartId = await db.runAsync(
@@ -27,6 +37,16 @@ export const createDart = async ({ turnId, segment, multiplier, score }) => {
 //UPDATE
 
 export const updateDart = async (dartId, segment, multiplier, score) => {
+    console.log(
+        "updateDart - dartId",
+        dartId,
+        "segment",
+        segment,
+        "multiplier",
+        multiplier,
+        "score",
+        score,
+    );
     return await db.runAsync(
         `
     UPDATE darts

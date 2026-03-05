@@ -17,11 +17,9 @@ import { createTurn, updateTurn } from "../repositories/TurnRepository";
 - isBust = message ? 
 - afficher le score restant dynamiquement
 
-IONICONS
-
-- set : pin-outline
-- leg : golf-outline
-- timer : stopwatch-outline
+** Faire en sorte que le score s'affiche dynamiquement :
+- au moment ou le joueur ajoute une flechette, on affiche le score restant après cette flechette (score actuel - score de la flechette)
+- si le score restant après une flechette est < 0, on affiche que c'est un bust et que le score revient a celui du debut du tour
 
 */
 
@@ -36,7 +34,7 @@ const GameScreen = () => {
     const [loading, setLoading] = useState(true);
     const [turnNumber, setTurnNumber] = useState({});
     const [darts, setDarts] = useState({}); //max 3
-    const [turnId, setTurnId] = useState();
+    const [turnId, setTurnId] = useState({});
     const [dartsId, setDartsId] = useState({});
     //const { seconds } = useGameTimer();
     const [currentLegOrder, setCurrentLegOrder] = useState(0);
@@ -76,8 +74,19 @@ const GameScreen = () => {
         loadGame();
     }, []);
 
+    /* calcul score projeté après chaque fléchette */
+    const computeProjected = (playerId, playerIndex) => {
+        const currentScore = scores[playerId] ?? 0;
+        const turnTotal = (darts[playerIndex] || []).reduce(
+            (s, d) => s + d.score,
+            0,
+        );
+        const remaining = currentScore - turnTotal;
+        return { remaining, bust: remaining < 0 };
+    };
+
     /* Gestion tour - flechettes */
-    const handleTurn = async (darts, turnScore) => {
+    const handleTurn = async (turnScore) => {
         if (!game || !currentLeg) return;
         const currentPlayer = players[currentPlayerIndex];
         const currentScore = scores[currentPlayer.id];
@@ -86,10 +95,9 @@ const GameScreen = () => {
         const newTurnNumber = (turnNumber[currentPlayer.id] ?? 0) + 1;
 
         setTurnNumber((prev) => {
-            const currentTurn = prev[currentPlayer.id] ?? 0;
             return {
                 ...prev,
-                [currentPlayer.id]: currentTurn + 1,
+                [currentPlayer.id]: newTurnNumber,
             };
         });
 
@@ -106,10 +114,12 @@ const GameScreen = () => {
         if (
             turnId &&
             turnId[currentPlayer.id] &&
-            turnId[currentPlayer.id].turnNumber === newTurnNumber
+            turnId[currentPlayer.id].hasOwnProperty(newTurnNumber)
         ) {
+            const existingTurnId = turnId[currentPlayer.id][newTurnNumber];
             try {
-                await updateTurn(turnId[currentPlayer.id].turnId, {
+                await updateTurn({
+                    turnId: turnId[currentPlayer.id][newTurnNumber],
                     totalScore: turnScore,
                     isBust: isBust,
                     remainingScoreAfter: remainingScoreAfter,
@@ -120,22 +130,40 @@ const GameScreen = () => {
             }
 
             try {
-                if (turnId) {
-                    darts[currentPlayerIndex].map((item, index) => {
-                        if (
-                            dartsId[currentPlayer.id] &&
-                            dartsId[currentPlayer.id][index]
-                        ) {
-                            //update
-                            DartRepository.updateDart({
-                                dartId: dartsId[currentPlayer.id][index],
-                                number: item.number,
-                                multiplier: item.multiplier,
-                                score: item.score,
-                            });
-                            return dartsId[currentPlayer.id][index];
-                        }
-                    });
+                if (existingTurnId) {
+                    console.log(
+                        "update dart - existingTurnId",
+                        existingTurnId,
+                        "darts",
+                        darts[currentPlayerIndex][existingTurnId],
+                    );
+                    darts[currentPlayerIndex][existingTurnId].map(
+                        (item, index) => {
+                            if (
+                                dartsId[currentPlayer.id][existingTurnId] &&
+                                dartsId[currentPlayer.id][existingTurnId][index]
+                            ) {
+                                console.log(
+                                    "update dart - dartId",
+                                    dartsId[currentPlayer.id][existingTurnId][
+                                        index
+                                    ],
+                                );
+                                //update
+                                DartRepository.updateDart({
+                                    dartId: dartsId[currentPlayer.id][
+                                        existingTurnId
+                                    ][index],
+                                    segment: item.number,
+                                    multiplier: item.multiplier,
+                                    score: item.score,
+                                });
+                                return dartsId[currentPlayer.id][
+                                    existingTurnId
+                                ][index];
+                            }
+                        },
+                    );
                 }
             } catch (e) {
                 console.error("updateDartError", e);
@@ -144,37 +172,50 @@ const GameScreen = () => {
         } else {
             //create
             try {
-                const createdTurnId = await createTurn({
+                await createTurn({
                     legId: currentLeg,
                     playerId: currentPlayer,
                     turnNumber: newTurnNumber,
                     totalScore: turnScore,
                     isBust: isBust,
                     remainingScoreAfter: remainingScoreAfter,
-                });
-                setTurnId((prev) => ({
-                    ...prev,
-                    [currentPlayer.id]: {
-                        turnNumber: newTurnNumber,
-                        turnId: createdTurnId,
-                    },
-                }));
+                }).then((turnId) => {
+                    setTurnId((prev) => {
+                        const playerTurns = prev[currentPlayer.id] || {};
+                        return {
+                            ...prev,
+                            [currentPlayer.id]: {
+                                ...playerTurns,
+                                [newTurnNumber]: turnId,
+                            },
+                        };
+                    });
 
-                if (turnId) {
-                    const currentDartsId = darts[currentPlayerIndex].map(
-                        (item) =>
-                            DartRepository.createDart({
-                                turnId: createdTurnId,
-                                segment: item.number,
-                                multiplier: item.multiplier,
-                                score: item.score,
-                            }),
+                    darts[currentPlayerIndex].map((item, index) =>
+                        DartRepository.createDart({
+                            turnId: turnId,
+                            segment: item.number,
+                            multiplier: item.multiplier,
+                            score: item.score,
+                        }).then((dartId) => {
+                            setDartsId((prev) => {
+                                const playerTurns =
+                                    prev[currentPlayer.id] || {};
+                                const turnDarts = playerTurns[turnId] || {};
+                                return {
+                                    ...prev,
+                                    [currentPlayer.id]: {
+                                        ...playerTurns,
+                                        [turnId]: {
+                                            ...turnDarts,
+                                            [index]: dartId,
+                                        },
+                                    },
+                                };
+                            });
+                        }),
                     );
-                    setDartsId((prev) => ({
-                        ...prev,
-                        [currentPlayer.id]: currentDartsId,
-                    }));
-                }
+                });
                 //DartRepository.getDartsByTurnId(turnId).then((darts) => {});
             } catch (e) {
                 console.error("createDartorTurnError", e);
@@ -332,6 +373,10 @@ const GameScreen = () => {
             <ScrollView className="mt-2 p-4">
                 {players.map((item, index) => {
                     const isCurrent = index === currentPlayerIndex;
+                    const { bust, remaining } = computeProjected(
+                        item.id,
+                        index,
+                    );
                     return (
                         <View
                             key={item.id}
@@ -371,7 +416,7 @@ const GameScreen = () => {
                             </View>
 
                             <Text className="text-gray-800 text-2xl font-semibold">
-                                {scores[item.id]}
+                                {remaining}
                             </Text>
                         </View>
                     );
@@ -383,8 +428,8 @@ const GameScreen = () => {
                 handleUndoLastTurnDarts={() => handleUndoLastTurnDarts()}
                 darts={darts}
                 setDarts={setDarts}
-                onValidateTurn={(darts, totalScore) => {
-                    handleTurn(darts, totalScore);
+                onValidateTurn={(totalScore) => {
+                    handleTurn(totalScore);
                 }}
             />
         </View>

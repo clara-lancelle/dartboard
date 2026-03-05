@@ -45,7 +45,7 @@ export default function DartKeyboard({
     const handle3Darts = (playerDarts) => {
         const total = playerDarts.reduce((sum, d) => sum + d.score, 0);
         console.log("validate turn - darts", playerDarts, "total", total);
-        onValidateTurn(darts, total);
+        onValidateTurn(total);
     };
 
     const handleUndo = () => {

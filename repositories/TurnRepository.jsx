@@ -44,6 +44,16 @@ export const updateTurn = async ({
     isBust,
     remainingScoreAfter,
 }) => {
+    console.log(
+        "updateTurn - turnId",
+        turnId,
+        "totalScore",
+        totalScore,
+        "isBust",
+        isBust,
+        "remainingScoreAfter",
+        remainingScoreAfter,
+    );
     return await db.runAsync(
         `
     UPDATE turns
