@@ -37,17 +37,7 @@ export const createDart = async ({ turnId, segment, multiplier, score }) => {
 //UPDATE
 
 export const updateDart = async (dartId, segment, multiplier, score) => {
-    console.log(
-        "updateDart - dartId",
-        dartId,
-        "segment",
-        segment,
-        "multiplier",
-        multiplier,
-        "score",
-        score,
-    );
-    return await db.runAsync(
+    db.runAsync(
         `
     UPDATE darts
     SET segment = ? ,
@@ -57,6 +47,7 @@ export const updateDart = async (dartId, segment, multiplier, score) => {
     `,
         [segment, multiplier, score, dartId],
     );
+    return dartId;
 };
 
 export const getDartsByTurnId = async (turnId) => {

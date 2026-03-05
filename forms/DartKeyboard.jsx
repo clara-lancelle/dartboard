@@ -6,8 +6,7 @@ export default function DartKeyboard({
     currentPlayerIndex,
     onValidateTurn,
     handleUndoLastTurnDarts,
-    darts,
-    setDarts,
+    setCurrentDarts,
 }) {
     const [multiplier, setMultiplier] = useState(1);
     const numbers = Array.from({ length: 21 }, (_, i) => i); // 0 → 20
@@ -15,12 +14,12 @@ export default function DartKeyboard({
     const handleNumberPress = (number) => {
         const score = number * multiplier;
 
-        setDarts((prev) => {
-            const currentDarts = prev[currentPlayerIndex] || [];
-            if (currentDarts.length >= 3) return prev;
+        setCurrentDarts((prev) => {
+            const playedDarts = prev[currentPlayerIndex] || [];
+            if (playedDarts.length >= 3) return prev;
 
             const newDarts = [
-                ...currentDarts,
+                ...playedDarts,
                 {
                     number,
                     multiplier,
@@ -42,22 +41,22 @@ export default function DartKeyboard({
         });
     };
 
-    const handle3Darts = (playerDarts) => {
-        const total = playerDarts.reduce((sum, d) => sum + d.score, 0);
-        console.log("validate turn - darts", playerDarts, "total", total);
-        onValidateTurn(total);
+    const handle3Darts = (newDarts) => {
+        const total = newDarts.reduce((sum, d) => sum + d.score, 0);
+        console.log("validate turn - darts", newDarts, "total", total);
+        onValidateTurn(total, newDarts);
     };
 
     const handleUndo = () => {
-        setDarts((prev) => {
-            const currentDarts = prev[currentPlayerIndex] || [];
-            if (currentDarts.length === 0) {
+        setCurrentDarts((prev) => {
+            const playedDarts = prev[currentPlayerIndex] || [];
+            if (playedDarts.length === 0) {
                 handleUndoLastTurnDarts();
                 return prev;
             }
             return {
                 ...prev,
-                [currentPlayerIndex]: currentDarts.slice(0, -1),
+                [currentPlayerIndex]: playedDarts.slice(0, -1),
             };
         });
     };

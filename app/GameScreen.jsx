@@ -17,9 +17,44 @@ import { createTurn, updateTurn } from "../repositories/TurnRepository";
 - isBust = message ? 
 - afficher le score restant dynamiquement
 
-** Faire en sorte que le score s'affiche dynamiquement :
-- au moment ou le joueur ajoute une flechette, on affiche le score restant après cette flechette (score actuel - score de la flechette)
-- si le score restant après une flechette est < 0, on affiche que c'est un bust et que le score revient a celui du debut du tour
+*/
+
+/* 
+computedTurns = {
+    playerId: {
+        turnNumber: turnId
+    }
+}
+
+computedDarts = {
+    playerId: {
+        turnId: {
+            dartId: {
+                segment,
+                multiplier,
+                score
+            }
+        }
+    }
+}   
+
+currentDarts = {   
+    playerIndex: [
+        {
+            segment,
+            multiplier,
+            score
+        }
+    ]
+}
+
+currentTurnNumber = {
+    playerId: turnNumber
+}
+
+scores = {
+    playerId: score
+}
 
 */
 
@@ -32,10 +67,10 @@ const GameScreen = () => {
     const [scores, setScores] = useState({});
     const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
     const [loading, setLoading] = useState(true);
-    const [turnNumber, setTurnNumber] = useState({});
-    const [darts, setDarts] = useState({}); //max 3
-    const [turnId, setTurnId] = useState({});
-    const [dartsId, setDartsId] = useState({});
+    const [currentTurnNumber, setCurrentTurnNumber] = useState({});
+    const [currentDarts, setCurrentDarts] = useState({}); //max 3
+    const [computedTurns, setComputedTurns] = useState({});
+    const [computedDarts, setComputedDarts] = useState({});
     //const { seconds } = useGameTimer();
     const [currentLegOrder, setCurrentLegOrder] = useState(0);
     const [currentSetOrder, setCurrentSetOrder] = useState(0);
@@ -47,6 +82,7 @@ const GameScreen = () => {
    |--------------------------------------------------------------------------
    */
 
+    // LOAD *************************************************************************
     const loadGame = useCallback(async () => {
         try {
             const { game, players, currentLeg } =
@@ -61,7 +97,6 @@ const GameScreen = () => {
             players.forEach((p) => {
                 initialScores[p.id] = game.startingScore ?? 0;
             });
-
             setScores(initialScores);
         } catch (error) {
             console.error("Erreur chargement game:", error);
@@ -74,27 +109,32 @@ const GameScreen = () => {
         loadGame();
     }, []);
 
-    /* calcul score projeté après chaque fléchette */
+    // COMPUTE PROJECTED SCORE ***********************************************************************
     const computeProjected = (playerId, playerIndex) => {
         const currentScore = scores[playerId] ?? 0;
-        const turnTotal = (darts[playerIndex] || []).reduce(
+        const turnTotal = (currentDarts[playerIndex] || []).reduce(
             (s, d) => s + d.score,
             0,
         );
-        const remaining = currentScore - turnTotal;
+        const remaining =
+            playerIndex === currentPlayerIndex &&
+            currentDarts[playerIndex]?.length !== 3
+                ? currentScore - turnTotal
+                : currentScore;
+
         return { remaining, bust: remaining < 0 };
     };
 
-    /* Gestion tour - flechettes */
-    const handleTurn = async (turnScore) => {
+    // TURN MANAGEMENT ***********************************************************************
+    const handleTurn = async (turnScore, newDarts) => {
         if (!game || !currentLeg) return;
         const currentPlayer = players[currentPlayerIndex];
         const currentScore = scores[currentPlayer.id];
         const remainingScoreAfter = currentScore - turnScore;
         const isBust = remainingScoreAfter < 0 ? true : false;
-        const newTurnNumber = (turnNumber[currentPlayer.id] ?? 0) + 1;
+        const newTurnNumber = (currentTurnNumber[currentPlayer.id] ?? 0) + 1;
 
-        setTurnNumber((prev) => {
+        setCurrentTurnNumber((prev) => {
             return {
                 ...prev,
                 [currentPlayer.id]: newTurnNumber,
@@ -104,6 +144,7 @@ const GameScreen = () => {
         //bust
         if (!isBust) {
             // Update score
+
             setScores((prev) => ({
                 ...prev,
                 [currentPlayer.id]: remainingScoreAfter,
@@ -112,59 +153,64 @@ const GameScreen = () => {
 
         //check if exists (undo a turn) - update instead of create
         if (
-            turnId &&
-            turnId[currentPlayer.id] &&
-            turnId[currentPlayer.id].hasOwnProperty(newTurnNumber)
+            computedTurns &&
+            computedTurns[currentPlayer.id] &&
+            computedTurns[currentPlayer.id].hasOwnProperty(newTurnNumber)
         ) {
-            const existingTurnId = turnId[currentPlayer.id][newTurnNumber];
+            const existingTurnId =
+                computedTurns[currentPlayer.id][newTurnNumber];
             try {
                 await updateTurn({
-                    turnId: turnId[currentPlayer.id][newTurnNumber],
+                    turnId: existingTurnId,
                     totalScore: turnScore,
                     isBust: isBust,
                     remainingScoreAfter: remainingScoreAfter,
-                });
-            } catch (e) {
-                console.error("updateTurnError", e);
-                return;
-            }
-
-            try {
-                if (existingTurnId) {
-                    console.log(
-                        "update dart - existingTurnId",
-                        existingTurnId,
-                        "darts",
-                        darts[currentPlayerIndex][existingTurnId],
-                    );
-                    darts[currentPlayerIndex][existingTurnId].map(
-                        (item, index) => {
-                            if (
-                                dartsId[currentPlayer.id][existingTurnId] &&
-                                dartsId[currentPlayer.id][existingTurnId][index]
-                            ) {
-                                console.log(
-                                    "update dart - dartId",
-                                    dartsId[currentPlayer.id][existingTurnId][
-                                        index
-                                    ],
-                                );
-                                //update
-                                DartRepository.updateDart({
-                                    dartId: dartsId[currentPlayer.id][
-                                        existingTurnId
-                                    ][index],
-                                    segment: item.number,
-                                    multiplier: item.multiplier,
-                                    score: item.score,
-                                });
-                                return dartsId[currentPlayer.id][
+                }).then((turnId) => {
+                    setComputedTurns((prev) => {
+                        const playerTurns = prev[currentPlayer.id] || {};
+                        return {
+                            ...prev,
+                            [currentPlayer.id]: {
+                                ...playerTurns,
+                                [newTurnNumber]: turnId,
+                            },
+                        };
+                    });
+                    newDarts.map(async (item, index) => {
+                        if (
+                            computedDarts[currentPlayer.id][existingTurnId] &&
+                            computedDarts[currentPlayer.id][existingTurnId][
+                                index
+                            ]
+                        ) {
+                            //update
+                            await DartRepository.updateDart({
+                                dartId: computedDarts[currentPlayer.id][
                                     existingTurnId
-                                ][index];
-                            }
-                        },
-                    );
-                }
+                                ][index],
+                                segment: item.number,
+                                multiplier: item.multiplier,
+                                score: item.score,
+                            }).then((dartId) => {
+                                setComputedDarts((prev) => {
+                                    const playerTurns =
+                                        prev[currentPlayer.id] || {};
+                                    const turnData = playerTurns[turnId] || {};
+                                    return {
+                                        ...prev,
+                                        [currentPlayer.id]: {
+                                            ...playerTurns,
+                                            [turnId]: {
+                                                ...turnData,
+                                                [dartId]: newDarts[index],
+                                            },
+                                        },
+                                    };
+                                });
+                            });
+                        }
+                    });
+                });
             } catch (e) {
                 console.error("updateDartError", e);
                 return;
@@ -180,7 +226,7 @@ const GameScreen = () => {
                     isBust: isBust,
                     remainingScoreAfter: remainingScoreAfter,
                 }).then((turnId) => {
-                    setTurnId((prev) => {
+                    setComputedTurns((prev) => {
                         const playerTurns = prev[currentPlayer.id] || {};
                         return {
                             ...prev,
@@ -190,38 +236,40 @@ const GameScreen = () => {
                             },
                         };
                     });
-
-                    darts[currentPlayerIndex].map((item, index) =>
-                        DartRepository.createDart({
-                            turnId: turnId,
-                            segment: item.number,
-                            multiplier: item.multiplier,
-                            score: item.score,
-                        }).then((dartId) => {
-                            setDartsId((prev) => {
-                                const playerTurns =
-                                    prev[currentPlayer.id] || {};
-                                const turnDarts = playerTurns[turnId] || {};
-                                return {
-                                    ...prev,
-                                    [currentPlayer.id]: {
-                                        ...playerTurns,
-                                        [turnId]: {
-                                            ...turnDarts,
-                                            [index]: dartId,
+                    console.log(newDarts, "newdarts");
+                    newDarts.map(
+                        async (item, index) =>
+                            await DartRepository.createDart({
+                                turnId: turnId,
+                                segment: item.number,
+                                multiplier: item.multiplier,
+                                score: item.score,
+                            }).then((dartId) => {
+                                setComputedDarts((prev) => {
+                                    const playerTurns =
+                                        prev[currentPlayer.id] || {};
+                                    const turnData = playerTurns[turnId] || {};
+                                    return {
+                                        ...prev,
+                                        [currentPlayer.id]: {
+                                            ...playerTurns,
+                                            [turnId]: {
+                                                ...turnData,
+                                                [dartId]: newDarts[index],
+                                            },
                                         },
-                                    },
-                                };
-                            });
-                        }),
+                                    };
+                                });
+                            }),
                     );
                 });
                 //DartRepository.getDartsByTurnId(turnId).then((darts) => {});
             } catch (e) {
-                console.error("createDartorTurnError", e);
+                console.error("createDartOrTurnError", e);
                 return;
             }
         }
+        console.log("computedDarts", computedDarts);
 
         //winner
         if (remainingScoreAfter === 0) {
@@ -285,23 +333,56 @@ const GameScreen = () => {
         goToNextPlayer();
     };
 
+    // UNDO ***********************************************************************
     const handleUndoLastTurnDarts = () => {
         //si le joueur 0 et tour 0 = return (pas d'action possible)
-
         const undoPlayerIndex =
             currentPlayerIndex === 0 &&
-            turnNumber[players[currentPlayerIndex].id] === 0
+            currentTurnNumber[players[currentPlayerIndex].id] === 0
                 ? 0
                 : currentPlayerIndex - 1 < 0
                   ? players.length - 1
                   : currentPlayerIndex - 1;
         const undoTurnNumber =
-            turnNumber[players[undoPlayerIndex].id] === 0
+            currentTurnNumber[players[undoPlayerIndex].id] === 0
                 ? 0
-                : turnNumber[players[undoPlayerIndex].id] - 1;
+                : currentTurnNumber[players[undoPlayerIndex].id] - 1;
+        const undoTurnId =
+            computedTurns?.[players[undoPlayerIndex].id]?.[
+                currentTurnNumber[players[undoPlayerIndex].id]
+            ];
+        if (!undoTurnId) {
+            console.log("Aucun tour à annuler trouvé");
+            return;
+        }
+
+        const lastDarts = Object.values(
+            computedDarts?.[players[undoPlayerIndex].id]?.[undoTurnId] || [],
+        );
+        if (!lastDarts.length) {
+            console.log("Aucunes flechettes à annuler trouvées");
+            return;
+        }
+
+        setCurrentDarts((prev) => {
+            return {
+                ...prev,
+                [undoPlayerIndex]: lastDarts,
+            };
+        });
+        console.log(lastDarts, "lastDarts");
+        const remainingScoreAfter =
+            scores[players[undoPlayerIndex].id] -
+                lastDarts.reduce((s, d) => s + d.score, 0) ||
+            scores[players[undoPlayerIndex].id];
+        // retrieve score before the undone turn
+        setScores((prev) => ({
+            ...prev,
+            [players[undoPlayerIndex].id]: remainingScoreAfter,
+        }));
 
         setCurrentPlayerIndex(undoPlayerIndex);
-        setTurnNumber((prev) => {
+        setCurrentTurnNumber((prev) => {
             return {
                 ...prev,
                 [players[undoPlayerIndex].id]: undoTurnNumber,
@@ -319,7 +400,7 @@ const GameScreen = () => {
             currentPlayerIndex + 1 >= players.length
                 ? 0
                 : currentPlayerIndex + 1;
-        setDarts((prev) => {
+        setCurrentDarts((prev) => {
             return {
                 ...prev,
                 [newIndex]: [],
@@ -397,7 +478,7 @@ const GameScreen = () => {
 
                             <View className="flex-row justify-center items-center">
                                 {Array.from({ length: 3 }).map((_, i) => {
-                                    const dart = darts[index]?.[i];
+                                    const dart = currentDarts[index]?.[i];
 
                                     return (
                                         <View
@@ -426,10 +507,10 @@ const GameScreen = () => {
             <DartKeyboard
                 currentPlayerIndex={currentPlayerIndex}
                 handleUndoLastTurnDarts={() => handleUndoLastTurnDarts()}
-                darts={darts}
-                setDarts={setDarts}
-                onValidateTurn={(totalScore) => {
-                    handleTurn(totalScore);
+                currentDarts={currentDarts}
+                setCurrentDarts={setCurrentDarts}
+                onValidateTurn={(totalScore, newDarts) => {
+                    handleTurn(totalScore, newDarts);
                 }}
             />
         </View>

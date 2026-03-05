@@ -10,7 +10,7 @@ export const createTurn = async ({
     remainingScoreAfter,
 }) => {
     const now = new Date().toISOString();
-    const turnResult = await db.runAsync(
+    const TurnId = await db.runAsync(
         `
     INSERT INTO turns
     (
@@ -34,8 +34,7 @@ export const createTurn = async ({
             now,
         ],
     );
-    const gameId = turnResult.lastInsertRowId;
-    return gameId;
+    return TurnId.lastInsertRowId;
 };
 
 export const updateTurn = async ({
@@ -44,17 +43,7 @@ export const updateTurn = async ({
     isBust,
     remainingScoreAfter,
 }) => {
-    console.log(
-        "updateTurn - turnId",
-        turnId,
-        "totalScore",
-        totalScore,
-        "isBust",
-        isBust,
-        "remainingScoreAfter",
-        remainingScoreAfter,
-    );
-    return await db.runAsync(
+    await db.runAsync(
         `
     UPDATE turns
     SET totalScore = ?,
@@ -64,6 +53,7 @@ export const updateTurn = async ({
     `,
         [totalScore, isBust ? 1 : 0, remainingScoreAfter, turnId],
     );
+    return turnId;
 };
 
 //
