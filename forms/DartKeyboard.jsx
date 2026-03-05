@@ -7,6 +7,7 @@ export default function DartKeyboard({
     onValidateTurn,
     handleUndoLastTurnDarts,
     setCurrentDarts,
+    currentDarts,
 }) {
     const [multiplier, setMultiplier] = useState(1);
     const numbers = Array.from({ length: 21 }, (_, i) => i); // 0 → 20
@@ -48,17 +49,20 @@ export default function DartKeyboard({
     };
 
     const handleUndo = () => {
-        setCurrentDarts((prev) => {
-            const playedDarts = prev[currentPlayerIndex] || [];
-            if (playedDarts.length === 0) {
-                handleUndoLastTurnDarts();
-                return prev;
-            }
-            return {
-                ...prev,
-                [currentPlayerIndex]: playedDarts.slice(0, -1),
-            };
-        });
+        const playedDarts = currentDarts[currentPlayerIndex] || [];
+
+        if (playedDarts.length > 0) {
+            setCurrentDarts((prev) => {
+                // Il y a des darts en cours → enlever la dernière
+                return {
+                    ...prev,
+                    [currentPlayerIndex]: playedDarts.slice(0, -1),
+                };
+            });
+        } else {
+            // Pas de dart en cours → undo le tour précédent
+            handleUndoLastTurnDarts();
+        }
     };
 
     return (

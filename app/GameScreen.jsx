@@ -109,22 +109,6 @@ const GameScreen = () => {
         loadGame();
     }, []);
 
-    // COMPUTE PROJECTED SCORE ***********************************************************************
-    const computeProjected = (playerId, playerIndex) => {
-        const currentScore = scores[playerId] ?? 0;
-        const turnTotal = (currentDarts[playerIndex] || []).reduce(
-            (s, d) => s + d.score,
-            0,
-        );
-        const remaining =
-            playerIndex === currentPlayerIndex &&
-            currentDarts[playerIndex]?.length !== 3
-                ? currentScore - turnTotal
-                : currentScore;
-
-        return { remaining, bust: remaining < 0 };
-    };
-
     // TURN MANAGEMENT ***********************************************************************
     const handleTurn = async (turnScore, newDarts) => {
         if (!game || !currentLeg) return;
@@ -269,11 +253,11 @@ const GameScreen = () => {
                 return;
             }
         }
-        console.log("computedDarts", computedDarts);
 
         //winner
         if (remainingScoreAfter === 0) {
             //gagne le leg
+            console.log("leg gagné !");
             await LegRepository.markLegAsWon(currentLeg.id, currentPlayer.id);
             // ajoute une victoire de leg au joueur
             setCountLegWinsForPlayer((prev) => {
@@ -335,8 +319,64 @@ const GameScreen = () => {
 
     // UNDO ***********************************************************************
     const handleUndoLastTurnDarts = () => {
+        const prevPlayerIndex =
+            currentPlayerIndex === 0
+                ? players.length - 1
+                : currentPlayerIndex - 1;
+        const prevPlayerId = players[prevPlayerIndex].id;
+        const currentPrevTurnNumber = currentTurnNumber[prevPlayerId] || 0;
+
+        const prevTurnId =
+            computedTurns?.[prevPlayerId]?.[currentPrevTurnNumber];
+        console.log("handleUndoLastTurnDarts", {
+            prevPlayerIndex,
+            prevPlayerId,
+            currentPrevTurnNumber,
+            prevTurnId,
+            computedTurns,
+        });
+        if (!prevTurnId) {
+            console.log("Aucun tour à annuler trouvé");
+            return;
+        }
+        const dartsToRestore = Object.values(
+            computedDarts?.[prevPlayerId]?.[prevTurnId] ?? [],
+        );
+
+        if (dartsToRestore.length === 0) {
+            console.log("Aucunes fléchettes à annuler trouvées");
+            return;
+        }
+        dartsToRestore.slice(0, -2);
+        // set currentdarts, currentplayerindex, currentturnnumber (pour le tour annulé)
+        setCurrentDarts((prev) => ({
+            ...prev,
+            [prevPlayerIndex]: dartsToRestore,
+        }));
+        setCurrentPlayerIndex(prevPlayerIndex);
+        setCurrentTurnNumber((prev) => ({
+            ...prev,
+            [prevPlayerId]: currentPrevTurnNumber - 1,
+        }));
+
+        // recalcul score du joueur
+        const scoreOfCanceledTurn = dartsToRestore.reduce(
+            (sum, dart) => sum + (dart.score ?? 0),
+            0,
+        );
+        const restoredScore = scores[prevPlayerId] + scoreOfCanceledTurn;
+
+        setScores((prev) => ({
+            ...prev,
+            [prevPlayerId]: restoredScore,
+        }));
+        console.log(
+            `Undo : Joueur ${prevPlayerId}, tour ${currentPrevTurnNumber}, ` +
+                `score restauré à ${restoredScore}, darts = ${dartsToRestore.length}`,
+        );
+
         //si le joueur 0 et tour 0 = return (pas d'action possible)
-        const undoPlayerIndex =
+        /*const undoPlayerIndex =
             currentPlayerIndex === 0 &&
             currentTurnNumber[players[currentPlayerIndex].id] === 0
                 ? 0
@@ -363,17 +403,19 @@ const GameScreen = () => {
             console.log("Aucunes flechettes à annuler trouvées");
             return;
         }
-
+        lastDarts.sort((a, b) => b.dartId - a.dartId); //trier pour retirer dans l'ordre
+        //lastDarts.slice(0, -1); // retirer la dernière fléchette jouée
         setCurrentDarts((prev) => {
             return {
                 ...prev,
-                [undoPlayerIndex]: lastDarts,
+                [undoPlayerIndex]: lastDarts.slice(0, -1),
             };
         });
-        console.log(lastDarts, "lastDarts");
+        setCurrentPlayerIndex(undoPlayerIndex);
+        console.log(lastDarts.slice(0, -1), "lastDarts");
         const remainingScoreAfter =
             scores[players[undoPlayerIndex].id] -
-                lastDarts.reduce((s, d) => s + d.score, 0) ||
+                lastDarts.slice(0, -1).reduce((s, d) => s + d.score, 0) ||
             scores[players[undoPlayerIndex].id];
         // retrieve score before the undone turn
         setScores((prev) => ({
@@ -388,7 +430,23 @@ const GameScreen = () => {
                 [players[undoPlayerIndex].id]: undoTurnNumber,
             };
         });
-        return;
+        return;*/
+    };
+
+    // COMPUTE PROJECTED SCORE ***********************************************************************
+    const computeProjected = (playerId, playerIndex) => {
+        const currentScore = scores[playerId] ?? 0;
+        const turnTotal = (currentDarts[playerIndex] || []).reduce(
+            (s, d) => s + d.score,
+            0,
+        );
+        const remaining =
+            playerIndex === currentPlayerIndex &&
+            currentDarts[playerIndex]?.length !== 3
+                ? currentScore - turnTotal
+                : currentScore;
+
+        return { remaining, bust: remaining < 0 };
     };
 
     //Rotation joueur
