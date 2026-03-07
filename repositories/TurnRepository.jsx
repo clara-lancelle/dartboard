@@ -25,8 +25,8 @@ export const createTurn = async ({
     VALUES (?, ?, ?, ?, ?, ?, ?)
     `,
         [
-            legId.id,
-            playerId.id,
+            legId,
+            playerId,
             turnNumber,
             totalScore,
             isBust ? 1 : 0,
