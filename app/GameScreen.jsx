@@ -24,9 +24,7 @@ const GameScreen = () => {
         currentPlayerScore,
         playerTurns,
         computeProjectedScore,
-        scores,
         addDart,
-        removeDart,
         validateTurn,
         undo,
         moveToNextPlayer,
@@ -207,7 +205,6 @@ const GameScreen = () => {
             <DartKeyboard
                 currentDarts={currentDarts}
                 onAddDart={addDart}
-                onRemoveDart={removeDart}
                 onUndo={handleUndo}
                 onValidateTurn={handleValidateTurn}
             />

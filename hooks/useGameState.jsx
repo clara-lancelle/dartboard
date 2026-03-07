@@ -221,7 +221,7 @@ export const useGameState = (gameId) => {
      * Undo : annuler la fléchette courante OU le tour précédent
      */
     const undo = useCallback(
-        async (turnRepository, dartRepository) => {
+        async (turnRepository) => {
             // Cas 1 : il y a des fléchettes en cours → enlever la dernière
             if (currentDarts.length > 0) {
                 removeDart();
@@ -329,9 +329,7 @@ export const useGameState = (gameId) => {
         computeProjectedScore,
 
         // Fonctions
-        scores,
         addDart,
-        removeDart,
         validateTurn,
         undo,
         moveToNextPlayer,
