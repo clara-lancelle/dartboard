@@ -5,8 +5,23 @@ import AvatarComponent from "../components/AvatarComponent";
 import DartKeyboard from "../forms/DartKeyboard";
 import { useGameState } from "../hooks/useGameState";
 import * as DartRepository from "../repositories/DartRepository";
+import * as GameRepository from "../repositories/GameRepository";
 import * as LegRepository from "../repositories/LegRepository";
+import * as SetRepository from "../repositories/SetRepository";
 import * as TurnRepository from "../repositories/TurnRepository";
+
+/**TODO
+ * Affichage BUSTED !
+ * Voir les stats après victoire
+ * Retour a l'accueil après victoire
+ * verif if remainingscore === 0 && last dart is double or bull
+ * Ajouter un bouton "Terminer le leg" pour les cas où le joueur ne peut pas finir (ex: 1 point restant)
+ * Ajouter un bouton "Terminer le set" pour les cas où les joueurs veulent arrêter avant la fin (ex: 2-0 dans un set de 3 legs)
+ * Ajouter un bouton "Terminer la partie" pour les cas où les joueurs veulent arrêter avant la fin (ex: 2-0 dans un match de 3 sets)
+ * Ajouter une confirmation pour ces boutons
+ * Gérer les égalités dans les legs (ex: tous les joueurs tombent à 0 ou moins dans le même tour) => on peut faire repartir le leg à 501 pour les joueurs concernés, ou faire repartir tout le monde à 501
+ * Gérer les égalités dans les sets (ex: tous les joueurs gagnent le même nombre de legs) => on peut faire repartir un leg supplémentaire en cas d'égalité, ou faire
+ **/
 
 const GameScreen = () => {
     const route = useRoute();
@@ -24,11 +39,18 @@ const GameScreen = () => {
         currentPlayerScore,
         playerTurns,
         computeProjectedScore,
+        legWinsByPlayer,
+        setWinsByPlayer,
+        currentSetNumber,
+        currentLegNumber,
         addDart,
         validateTurn,
         undo,
         moveToNextPlayer,
         loadGame,
+        checkWinConditions,
+        loadNextLeg,
+        loadNextSet,
     } = useGameState(gameId);
 
     // ========== HANDLERS ==========
@@ -50,25 +72,79 @@ const GameScreen = () => {
 
         const { remainingScore } = result;
 
-        // ✅ Vérifier victoire du leg
+        // ✅ Vérifier victoire
         if (remainingScore === 0) {
-            try {
-                await LegRepository.markLegAsWon(
-                    currentLeg.id,
-                    currentPlayer.id,
-                );
+            const winResult = await checkWinConditions(
+                currentPlayer.id,
+                LegRepository,
+                SetRepository,
+                GameRepository,
+            );
 
+            if (!winResult || winResult.type === "ERROR") {
+                console.error("Erreur lors de la vérification des victoires");
+                return;
+            }
+
+            // ========== LEG WON ==========
+            if (winResult.type === "LEG_WON") {
                 Alert.alert(
                     "Leg gagné 🎯",
-                    `${currentPlayer.name} gagne le leg !`,
-                    [{ text: "OK", onPress: loadGame }],
+                    `${currentPlayer.name} gagne le leg !\n\n${winResult.legWins}/${game.legsNumber}`,
+                    [
+                        {
+                            text: "Continuer",
+                            onPress: async () => {
+                                const success = await loadNextLeg();
+                                if (!success) {
+                                    Alert.alert(
+                                        "Erreur",
+                                        "Impossible de charger le leg suivant",
+                                    );
+                                }
+                            },
+                        },
+                    ],
                 );
+            }
 
-                // TODO: gérer les sets et le match
-                // - Compter les victoires de leg
-                // - Passer au prochain leg ou au set suivant
-            } catch (error) {
-                console.error("Erreur marquage leg:", error);
+            // ========== SET WON ==========
+            else if (winResult.type === "SET_WON") {
+                Alert.alert(
+                    "Set gagné 🏆",
+                    `${currentPlayer.name} gagne le set !\n\n${winResult.setWins}/${game.setsNumber}`,
+                    [
+                        {
+                            text: "Continuer",
+                            onPress: async () => {
+                                const success = await loadNextSet();
+                                if (!success) {
+                                    Alert.alert(
+                                        "Erreur",
+                                        "Impossible de charger le set suivant",
+                                    );
+                                }
+                            },
+                        },
+                    ],
+                );
+            }
+
+            // ========== MATCH WON ==========
+            else if (winResult.type === "MATCH_WON") {
+                Alert.alert(
+                    "Partie terminée 🎉",
+                    `${currentPlayer.name} gagne le match !\n\n${winResult.setWins}/${game.setsNumber} sets`,
+                    [
+                        {
+                            text: "Nouvelle partie",
+                            onPress: () => {
+                                // TODO: Naviguer vers l'écran d'accueil
+                                // navigation.navigate("HomeScreen");
+                            },
+                        },
+                    ],
+                );
             }
         }
     };
@@ -77,7 +153,7 @@ const GameScreen = () => {
      * Gérer l'undo
      */
     const handleUndo = async () => {
-        const result = await undo(TurnRepository, DartRepository);
+        const result = await undo(TurnRepository);
         if (!result.success) {
             console.warn("Undo échoué:", result.error);
         }
@@ -119,23 +195,19 @@ const GameScreen = () => {
                         color="#FFFFFF"
                         size={22}
                     />
-                    {/* TODO: Ajouter timer */}
-                    {/* <Text className="text-2xl font-bold text-white pt-1">
-                        {formatTime(seconds)}
-                    </Text> */}
                 </View>
 
                 <View className="flex justify-center items-center w-1/3 border-slate-300 border-r-[1px]">
                     <Ionicons name="golf-outline" color="#FFFFFF" size={22} />
                     <Text className="text-2xl font-bold text-white pt-1">
-                        {game.currentSet ?? 1} / {game.setsNumber}
+                        {currentSetNumber} / {game.setsNumber}
                     </Text>
                 </View>
 
                 <View className="flex justify-center items-center w-1/3">
                     <Ionicons name="pin-outline" color="#FFFFFF" size={22} />
                     <Text className="text-2xl font-bold text-white pt-1">
-                        {game.currentLeg ?? 1} / {game.legsNumber}
+                        {currentLegNumber} / {game.legsNumber}
                     </Text>
                 </View>
             </View>
@@ -149,6 +221,7 @@ const GameScreen = () => {
                         player.id,
                         index,
                     );
+
                     return (
                         <View
                             key={player.id}
@@ -156,7 +229,7 @@ const GameScreen = () => {
                                 isCurrent ? "bg-[#FFB380]" : "bg-white"
                             }`}
                         >
-                            {/* Avatar et nom */}
+                            {/* Avatar, nom et compteurs */}
                             <View className="items-center justify-center flex-1">
                                 <AvatarComponent
                                     avatar={player.avatar}
@@ -165,6 +238,10 @@ const GameScreen = () => {
                                 />
                                 <Text className="text-gray-700 text-lg font-normal mt-1">
                                     {player.name}
+                                </Text>
+                                <Text className="text-gray-600 text-sm">
+                                    {legWinsByPlayer[player.id] ?? 0}L{" "}
+                                    {setWinsByPlayer[player.id] ?? 0}S
                                 </Text>
                             </View>
 
@@ -188,7 +265,7 @@ const GameScreen = () => {
                                 })}
                             </View>
 
-                            {/* ✅ Score projeté dynamique avec couleur si bust */}
+                            {/* Score projeté dynamique */}
                             <Text
                                 className={`text-2xl font-semibold flex-1 text-right ${
                                     bust ? "text-red-600" : "text-gray-800"

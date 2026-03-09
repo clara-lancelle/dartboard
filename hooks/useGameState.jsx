@@ -13,6 +13,12 @@ export const useGameState = (gameId) => {
     const [currentDarts, setCurrentDarts] = useState([]);
     const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
 
+    // ========== ÉTATS DES VICTOIRES ==========
+    const [legWinsByPlayer, setLegWinsByPlayer] = useState({});
+    const [setWinsByPlayer, setSetWinsByPlayer] = useState({});
+    const [currentSetNumber, setCurrentSetNumber] = useState(1);
+    const [currentLegNumber, setCurrentLegNumber] = useState(1);
+
     // ========== LOAD GAME ==========
     useEffect(() => {
         loadGame();
@@ -29,7 +35,17 @@ export const useGameState = (gameId) => {
             setCurrentLeg(currentLeg);
             setCurrentPlayerIndex(0);
             setCurrentDarts([]);
-            setPlayerTurns({}); // Reset turns quand on charge une nouvelle partie
+            setPlayerTurns({});
+
+            // Initialiser les compteurs de victoires
+            const initialWins = {};
+            players.forEach((p) => {
+                initialWins[p.id] = 0;
+            });
+            setLegWinsByPlayer(initialWins);
+            setSetWinsByPlayer(initialWins);
+            setCurrentSetNumber(1);
+            setCurrentLegNumber(1);
         } catch (error) {
             console.error("Erreur chargement game:", error);
         } finally {
@@ -61,6 +77,7 @@ export const useGameState = (gameId) => {
     );
 
     const currentPlayerScore = currentPlayer ? scores(currentPlayer.id) : 0;
+
     /**
      * Calculer le score projeté (en temps réel) pour un joueur
      * = score actuel - somme des darts en cours
@@ -88,6 +105,7 @@ export const useGameState = (gameId) => {
         },
         [scores, currentPlayerIndex, currentDarts, game],
     );
+
     // ========== ACTIONS ==========
 
     /**
@@ -218,6 +236,129 @@ export const useGameState = (gameId) => {
     );
 
     /**
+     * Vérifier si quelqu'un a gagné le leg/set/match et gérer la suite
+     */
+    const checkWinConditions = useCallback(
+        async (playerId, legRepository, setRepository, gameRepository) => {
+            try {
+                // 1️⃣ Marquer le leg comme gagné
+                await legRepository.markLegAsWon(currentLeg.id, playerId);
+
+                // 2️⃣ Incrémenter les victoires de leg
+                const updatedLegWins = (legWinsByPlayer[playerId] ?? 0) + 1;
+                setLegWinsByPlayer((prev) => ({
+                    ...prev,
+                    [playerId]: updatedLegWins,
+                }));
+
+                // 3️⃣ Vérifier victoire du set (best of)
+                const legsToWin = Math.ceil(game.legsNumber / 2);
+                if (updatedLegWins >= legsToWin) {
+                    // Le joueur a gagné le set
+                    await setRepository.markSetAsWon(
+                        currentLeg.setId,
+                        playerId,
+                    );
+
+                    const updatedSetWins = (setWinsByPlayer[playerId] ?? 0) + 1;
+                    setSetWinsByPlayer((prev) => ({
+                        ...prev,
+                        [playerId]: updatedSetWins,
+                    }));
+
+                    console.log("Set gagné par le joueur", playerId, {
+                        updatedLegWins,
+                        updatedSetWins,
+                        "in game": game,
+                    });
+                    // 4️⃣ Vérifier victoire du match
+                    const setsToWin = Math.ceil(game.setsNumber / 2);
+                    if (updatedSetWins >= setsToWin) {
+                        // Le joueur a gagné le match !
+                        await gameRepository.markGameAsWon(game.id, playerId);
+
+                        return {
+                            type: "MATCH_WON",
+                            winner: playerId,
+                            legWins: updatedLegWins,
+                            setWins: updatedSetWins,
+                        };
+                    } else {
+                        // Le set est gagné, on passe au set suivant
+                        return {
+                            type: "SET_WON",
+                            winner: playerId,
+                            legWins: updatedLegWins,
+                            setWins: updatedSetWins,
+                        };
+                    }
+                } else {
+                    // Le leg est gagné, on passe au leg suivant du même set
+                    return {
+                        type: "LEG_WON",
+                        winner: playerId,
+                        legWins: updatedLegWins,
+                        setWins: setWinsByPlayer[playerId] ?? 0,
+                    };
+                }
+            } catch (error) {
+                console.error("Erreur dans checkWinConditions:", error);
+                return { type: "ERROR", error };
+            }
+        },
+        [game, currentLeg, legWinsByPlayer, setWinsByPlayer],
+    );
+
+    /**
+     * Charger le leg suivant et réinitialiser l'état du jeu
+     */
+    const loadNextLeg = useCallback(async () => {
+        try {
+            // Charger la nouvelle partie (leg suivant)
+            const { currentLeg } = await GameRepository.getFullGameById(gameId);
+
+            setCurrentLeg(currentLeg);
+            setCurrentLegNumber((prev) => prev + 1);
+            setPlayerTurns({}); // Réinitialiser les turns
+            setCurrentDarts([]);
+            setCurrentPlayerIndex(0); // Le joueur qui a commencé recommence
+
+            return true;
+        } catch (error) {
+            console.error("Erreur loadNextLeg:", error);
+            return false;
+        }
+    }, [gameId]);
+
+    /**
+     * Charger le set suivant et réinitialiser l'état
+     */
+    const loadNextSet = useCallback(async () => {
+        try {
+            const { currentLeg } = await GameRepository.getFullGameById(gameId);
+
+            setCurrentLeg(currentLeg);
+            setCurrentSetNumber((prev) => prev + 1);
+            setCurrentLegNumber(1); // Recommencer les legs
+            setPlayerTurns({});
+            setCurrentDarts([]);
+            setCurrentPlayerIndex(0);
+
+            // Réinitialiser les compteurs de leg
+            const initialLegWins = {};
+            players.forEach((p) => {
+                initialLegWins[p.id] = 0;
+            });
+            setLegWinsByPlayer(initialLegWins);
+
+            return true;
+        } catch (error) {
+            console.error("Erreur loadNextSet:", error);
+            return false;
+        }
+    }, [gameId, players]);
+
+    /**
      * Undo : annuler la fléchette courante OU le tour précédent
      */
     const undo = useCallback(
@@ -265,7 +406,6 @@ export const useGameState = (gameId) => {
             try {
                 // Supprimer en DB si le turn a un ID
                 if (turnToUndo.id) {
-                    // Note: tu dois implémenter deleteTurn dans TurnRepository
                     if (turnRepository.deleteTurn) {
                         await turnRepository.deleteTurn(turnToUndo.id);
                     }
@@ -328,11 +468,20 @@ export const useGameState = (gameId) => {
         currentPlayerScore,
         computeProjectedScore,
 
+        // Victoires
+        legWinsByPlayer,
+        setWinsByPlayer,
+        currentSetNumber,
+        currentLegNumber,
+
         // Fonctions
         addDart,
         validateTurn,
         undo,
         moveToNextPlayer,
         loadGame,
+        checkWinConditions,
+        loadNextLeg,
+        loadNextSet,
     };
 };

@@ -139,7 +139,7 @@ export const markGameAsWon = async (gameId, winnerId) => {
     const now = new Date().toISOString();
     return await db.runAsync(
         `
-    UPDATE game
+    UPDATE games
     SET ended_at = ?,
         winnerId = ?
     WHERE id = ?
