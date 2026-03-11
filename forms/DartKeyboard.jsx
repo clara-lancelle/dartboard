@@ -97,9 +97,27 @@ export default function DartKeyboard({
     // ========== RENDER ==========
 
     return (
-        <View className="my-4 mx-1 rounded-t-2xl bg-[#6A5AE0] p-4">
+        <View className="my-4 rounded-t-2xl bg-[#6A5AE0] px-1 py-3 border-y-[1px] border-x-[1px] border-gray-300">
+            {/* ========== MULTIPLICATEURS ========== */}
+            <View className="flex-row justify-center">
+                {[1, 2, 3].map((m) => (
+                    <TouchableOpacity
+                        key={`multiplier-${m}`}
+                        onPress={() => handleMultiplierChange(m)}
+                        className={`px-8 py-2 m-2 rounded-lg ${
+                            multiplier === m
+                                ? "bg-[#FFB380]"
+                                : "bg-[#D9D4F7] opacity-50"
+                        }`}
+                    >
+                        <Text className="text-white font-bold text-lg">
+                            {m === 1 ? "1x" : m === 2 ? "2x" : "3x"}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
             {/* ========== BOUTONS NOMBRES ========== */}
-            <View className="flex-row flex-wrap justify-center mb-3">
+            <View className="flex-row flex-wrap justify-center mb-10">
                 {numbers.map((num) => (
                     <TouchableOpacity
                         key={`number-${num}`}
@@ -108,14 +126,14 @@ export default function DartKeyboard({
                         className={`w-14 h-14 m-1 rounded-lg items-center justify-center ${
                             currentDarts.length >= 3
                                 ? "bg-gray-400 opacity-50"
-                                : "bg-white"
+                                : "bg-[#8473FF] border-[1px] border-gray-300 shadow"
                         }`}
                     >
                         <Text
                             className={`text-lg font-bold ${
                                 currentDarts.length >= 3
                                     ? "text-gray-600"
-                                    : "text-gray-900"
+                                    : "text-white"
                             }`}
                         >
                             {num}
@@ -132,7 +150,7 @@ export default function DartKeyboard({
                         className={`w-14 h-14 m-1 rounded-lg items-center justify-center ${
                             currentDarts.length >= 3
                                 ? "bg-green-900 opacity-50"
-                                : "bg-green-700"
+                                : "bg-[#8473FF] border-[1px] border-[#C9FFE8]"
                         }`}
                     >
                         <Text
@@ -151,7 +169,7 @@ export default function DartKeyboard({
                 <TouchableOpacity
                     key="undo"
                     onPress={handleUndo}
-                    className="w-14 h-14 bg-gray-600 m-1 rounded-lg items-center justify-center active:bg-gray-700"
+                    className="w-14 h-14 bg-gray-600 m-1 border-[1px] border-gray-400 rounded-lg items-center justify-center active:bg-gray-700"
                 >
                     <Ionicons
                         name="backspace-outline"
@@ -159,23 +177,6 @@ export default function DartKeyboard({
                         color={"#fff"}
                     />
                 </TouchableOpacity>
-            </View>
-
-            {/* ========== MULTIPLICATEURS ========== */}
-            <View className="flex-row justify-center">
-                {[1, 2, 3].map((m) => (
-                    <TouchableOpacity
-                        key={`multiplier-${m}`}
-                        onPress={() => handleMultiplierChange(m)}
-                        className={`px-6 py-3 m-2 rounded-lg ${
-                            multiplier === m ? "bg-red-600" : "bg-gray-700"
-                        }`}
-                    >
-                        <Text className="text-white font-bold text-lg">
-                            {m === 1 ? "Single" : m === 2 ? "Double" : "Triple"}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
             </View>
         </View>
     );

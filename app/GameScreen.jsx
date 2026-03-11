@@ -1,14 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
+import { useState } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
+import Animated from "react-native-reanimated";
 import AvatarComponent from "../components/AvatarComponent";
 import DartKeyboard from "../forms/DartKeyboard";
 import { useGameState } from "../hooks/useGameState";
-import * as DartRepository from "../repositories/DartRepository";
 import * as GameRepository from "../repositories/GameRepository";
 import * as LegRepository from "../repositories/LegRepository";
 import * as SetRepository from "../repositories/SetRepository";
-import * as TurnRepository from "../repositories/TurnRepository";
 
 /**TODO
  * Affichage BUSTED !
@@ -26,6 +26,8 @@ import * as TurnRepository from "../repositories/TurnRepository";
 const GameScreen = () => {
     const route = useRoute();
     const { gameId } = route.params;
+    const [bustAlert, setBustAlert] = useState(false);
+    const [bustPlayerId, setBustPlayerId] = useState(null);
 
     // ✅ Le hook charge tout et gère tout l'état
     const {
@@ -58,12 +60,8 @@ const GameScreen = () => {
     /**
      * Gérer la validation d'un tour
      */
-    const handleValidateTurn = async (totalScore, newDarts) => {
-        const result = await validateTurn(
-            newDarts,
-            TurnRepository,
-            DartRepository,
-        );
+    const handleValidateTurn = async (total, newDarts) => {
+        const result = await validateTurn(newDarts);
 
         if (!result.success) {
             console.warn("Validation du turn échouée:", result.error);
@@ -71,6 +69,12 @@ const GameScreen = () => {
         }
 
         const { remainingScore } = result;
+        if (remainingScore < 0) {
+            setBustAlert(true);
+            setBustPlayerId(currentPlayer.id);
+            setTimeout(() => setBustAlert(false), 2000);
+            return;
+        }
 
         // ✅ Vérifier victoire
         if (remainingScore === 0) {
@@ -153,7 +157,7 @@ const GameScreen = () => {
      * Gérer l'undo
      */
     const handleUndo = async () => {
-        const result = await undo(TurnRepository);
+        const result = await undo();
         if (!result.success) {
             console.warn("Undo échoué:", result.error);
         }
@@ -198,14 +202,30 @@ const GameScreen = () => {
                 </View>
 
                 <View className="flex justify-center items-center w-1/3 border-slate-300 border-r-[1px]">
-                    <Ionicons name="golf-outline" color="#FFFFFF" size={22} />
+                    <View className="flex-row items-baseline">
+                        <Ionicons
+                            name="golf-outline"
+                            color="#FFFFFF"
+                            size={22}
+                        />
+                        <Text className="text-lg text-gray-300 pt-1 pl-2">
+                            Set
+                        </Text>
+                    </View>
                     <Text className="text-2xl font-bold text-white pt-1">
                         {currentSetNumber} / {game.setsNumber}
                     </Text>
                 </View>
 
                 <View className="flex justify-center items-center w-1/3">
-                    <Ionicons name="pin-outline" color="#FFFFFF" size={22} />
+                    <View className="flex-row items-baseline">
+                        <Ionicons
+                            name="pin-outline"
+                            color="#FFFFFF"
+                            size={22}
+                        />
+                        <Text className="text-lg text-white pt-1">Leg</Text>
+                    </View>
                     <Text className="text-2xl font-bold text-white pt-1">
                         {currentLegNumber} / {game.legsNumber}
                     </Text>
@@ -264,15 +284,16 @@ const GameScreen = () => {
                                     );
                                 })}
                             </View>
-
                             {/* Score projeté dynamique */}
-                            <Text
-                                className={`text-2xl font-semibold flex-1 text-right ${
-                                    bust ? "text-red-600" : "text-gray-800"
-                                }`}
-                            >
-                                {remaining}
-                            </Text>
+                            {bust ? (
+                                <Animated.Text className="text-red-600 text-2xl font-bold flex-1 text-right">
+                                    BUSTED !
+                                </Animated.Text>
+                            ) : (
+                                <Text className="text-2xl font-semibold flex-1 text-right text-gray-800">
+                                    {remaining}
+                                </Text>
+                            )}
                         </View>
                     );
                 })}

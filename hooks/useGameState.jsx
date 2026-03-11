@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
+import * as DartRepository from "../repositories/DartRepository";
 import * as GameRepository from "../repositories/GameRepository";
+import * as TurnRepository from "../repositories/TurnRepository";
 
 export const useGameState = (gameId) => {
     // ========== ÉTATS PRIMITIFS ==========
@@ -100,6 +102,7 @@ export const useGameState = (gameId) => {
 
             const remaining = currentScore - turnTotal;
             const bust = remaining < 0;
+            bust && validateTurn(currentDartsList);
 
             return { remaining, bust };
         },
@@ -133,7 +136,7 @@ export const useGameState = (gameId) => {
      * Valider le tour courant (sauvegarder dans playerTurns et DB)
      */
     const validateTurn = useCallback(
-        async (newDarts, turnRepository, dartRepository) => {
+        async (newDarts) => {
             if (
                 !currentPlayer ||
                 !currentLeg ||
@@ -154,7 +157,6 @@ export const useGameState = (gameId) => {
 
             const existingTurns = playerTurns[currentPlayer.id] || {};
             const turnNumber = Object.keys(existingTurns).length;
-
             try {
                 let savedTurnId;
                 const turnId = existingTurns[turnNumber]?.id || null;
@@ -162,7 +164,7 @@ export const useGameState = (gameId) => {
                 // Créer ou mettre à jour le turn
                 if (turnId) {
                     // Update
-                    await turnRepository.updateTurn({
+                    await TurnRepository.updateTurn({
                         turnId,
                         totalScore,
                         isBust,
@@ -171,7 +173,7 @@ export const useGameState = (gameId) => {
                     savedTurnId = turnId;
                 } else {
                     // Create
-                    savedTurnId = await turnRepository.createTurn({
+                    savedTurnId = await TurnRepository.createTurn({
                         legId: currentLeg.id,
                         playerId: currentPlayer.id,
                         turnNumber,
@@ -190,7 +192,7 @@ export const useGameState = (gameId) => {
 
                     if (existingDart?.id) {
                         // Update dart
-                        await dartRepository.updateDart({
+                        await DartRepository.updateDart({
                             dartId: existingDart.id,
                             segment: dart.number,
                             multiplier: dart.multiplier,
@@ -198,7 +200,7 @@ export const useGameState = (gameId) => {
                         });
                     } else {
                         // Create dart
-                        await dartRepository.createDart({
+                        await DartRepository.createDart({
                             turnId: savedTurnId,
                             segment: dart.number,
                             multiplier: dart.multiplier,
@@ -361,85 +363,82 @@ export const useGameState = (gameId) => {
     /**
      * Undo : annuler la fléchette courante OU le tour précédent
      */
-    const undo = useCallback(
-        async (turnRepository) => {
-            // Cas 1 : il y a des fléchettes en cours → enlever la dernière
-            if (currentDarts.length > 0) {
-                removeDart();
-                return { success: true };
-            }
+    const undo = useCallback(async () => {
+        // Cas 1 : il y a des fléchettes en cours → enlever la dernière
+        if (currentDarts.length > 0) {
+            removeDart();
+            return { success: true };
+        }
 
-            // Cas 2 : pas de fléchettes en cours → undo le tour du joueur précédent
-            if (players.length === 0) {
-                console.warn("Aucun joueur disponible");
-                return { success: false };
-            }
+        // Cas 2 : pas de fléchettes en cours → undo le tour du joueur précédent
+        if (players.length === 0) {
+            console.warn("Aucun joueur disponible");
+            return { success: false };
+        }
 
-            const prevPlayerIndex =
-                currentPlayerIndex === 0
-                    ? players.length - 1
-                    : currentPlayerIndex - 1;
-            const prevPlayer = players[prevPlayerIndex];
+        const prevPlayerIndex =
+            currentPlayerIndex === 0
+                ? players.length - 1
+                : currentPlayerIndex - 1;
+        const prevPlayer = players[prevPlayerIndex];
 
-            if (!prevPlayer) {
-                console.warn("Joueur précédent introuvable");
-                return { success: false };
-            }
+        if (!prevPlayer) {
+            console.warn("Joueur précédent introuvable");
+            return { success: false };
+        }
 
-            const prevTurns = playerTurns[prevPlayer.id] || {};
-            const turnNumbers = Object.keys(prevTurns).map(Number);
-            const prevTurnNumber =
-                turnNumbers.length > 0 ? Math.max(...turnNumbers) : -1;
+        const prevTurns = playerTurns[prevPlayer.id] || {};
+        const turnNumbers = Object.keys(prevTurns).map(Number);
+        const prevTurnNumber =
+            turnNumbers.length > 0 ? Math.max(...turnNumbers) : -1;
 
-            if (prevTurnNumber < 0) {
-                console.warn("Aucun tour à annuler");
-                return { success: false };
-            }
+        if (prevTurnNumber < 0) {
+            console.warn("Aucun tour à annuler");
+            return { success: false };
+        }
 
-            const turnToUndo = prevTurns[prevTurnNumber];
+        const turnToUndo = prevTurns[prevTurnNumber];
 
-            if (!turnToUndo) {
-                console.warn("Tour à annuler introuvable");
-                return { success: false };
-            }
+        if (!turnToUndo) {
+            console.warn("Tour à annuler introuvable");
+            return { success: false };
+        }
 
-            try {
-                // Supprimer en DB si le turn a un ID
-                if (turnToUndo.id) {
-                    if (turnRepository.deleteTurn) {
-                        await turnRepository.deleteTurn(turnToUndo.id);
-                    }
+        try {
+            // Supprimer en DB si le turn a un ID
+            if (turnToUndo.id) {
+                if (TurnRepository.deleteTurn) {
+                    await TurnRepository.deleteTurn(turnToUndo.id);
                 }
-
-                // Mettre à jour l'état : supprimer le tour
-                setPlayerTurns((prev) => {
-                    const newState = { ...prev };
-                    const playerTurnsObj = { ...newState[prevPlayer.id] };
-                    delete playerTurnsObj[prevTurnNumber];
-                    newState[prevPlayer.id] = playerTurnsObj;
-                    return newState;
-                });
-
-                // Restaurer l'écran d'input avec les darts du tour annulé
-                setCurrentDarts(turnToUndo.darts || []);
-
-                // Passer au joueur précédent
-                setCurrentPlayerIndex(prevPlayerIndex);
-
-                return { success: true };
-            } catch (error) {
-                console.error("Erreur undo:", error);
-                return { success: false, error };
             }
-        },
-        [
-            currentDarts.length,
-            currentPlayerIndex,
-            playerTurns,
-            players,
-            removeDart,
-        ],
-    );
+
+            // Mettre à jour l'état : supprimer le tour
+            setPlayerTurns((prev) => {
+                const newState = { ...prev };
+                const playerTurnsObj = { ...newState[prevPlayer.id] };
+                delete playerTurnsObj[prevTurnNumber];
+                newState[prevPlayer.id] = playerTurnsObj;
+                return newState;
+            });
+
+            // Restaurer l'écran d'input avec les darts du tour annulé
+            setCurrentDarts(turnToUndo.darts || []);
+
+            // Passer au joueur précédent
+            setCurrentPlayerIndex(prevPlayerIndex);
+
+            return { success: true };
+        } catch (error) {
+            console.error("Erreur undo:", error);
+            return { success: false, error };
+        }
+    }, [
+        currentDarts.length,
+        currentPlayerIndex,
+        playerTurns,
+        players,
+        removeDart,
+    ]);
 
     /**
      * Passer au joueur suivant
