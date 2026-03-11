@@ -31,13 +31,13 @@ export default function ParamGameScreen() {
     });
     const [x01Score, setX01Score] = useState(301);
     const [selectedPlayers, setSelectedPlayers] = useState([]);
-    const [selectedCheckIn, setSelectedCheckIn] = useState("Straight");
-    const [selectedCheckOut, setSelectedCheckOut] = useState("Double");
+    const [selectedCheckIn, setSelectedCheckIn] = useState("0");
+    const [selectedCheckOut, setSelectedCheckOut] = useState("1");
     const [selectedNumLegs, setSelectedNumLegs] = useState(1);
     const [selectedNumSets, setSelectedNumSets] = useState(1);
     const [randomFirstPlayer, setRandomFirstPlayer] = useState(true);
     const [error, setError] = useState("");
-    const checkOptions = ["Straight", "Double", "Master", "Tous"];
+    const checkOptions = ["Simple", "Double", "Master"];
     const legsOptions = [1, 3, 5, 7];
     const setsOptions = [1, 3, 5];
     const x01Options = [101, 201, 301, 401, 501, 601, 701, 801, 901, 1001];
@@ -139,12 +139,14 @@ export default function ParamGameScreen() {
                     )}
                     <LabelledAnimatedSelect
                         options={checkOptions}
+                        type="check"
                         selected={selectedCheckIn}
                         onSelect={(opt) => setSelectedCheckIn(opt)}
                         placeholder="Check In"
                     />
                     <LabelledAnimatedSelect
                         options={checkOptions}
+                        type="check"
                         selected={selectedCheckOut}
                         onSelect={(opt) => setSelectedCheckOut(opt)}
                         placeholder="Check Out"

@@ -8,6 +8,7 @@ import Animated, {
 
 export default function LabelledAnimatedSelect({
     options,
+    type = "",
     selected,
     onSelect,
     placeholder = "Choisir...",
@@ -47,7 +48,9 @@ export default function LabelledAnimatedSelect({
                 className="bg-white border-gray-200 border-2 border-solid p-3 rounded-xl flex-row justify-between items-center"
                 onPress={toggle}
             >
-                {selected && <Text className="text-gray-900">{selected}</Text>}
+                {selected && (
+                    <Text className="text-gray-900">{options[selected]}</Text>
+                )}
                 <Animated.Text
                     className="text-gray-900 text-base"
                     style={arrowStyle}
@@ -62,12 +65,12 @@ export default function LabelledAnimatedSelect({
                 style={animatedStyle}
             >
                 <ScrollView>
-                    {options.map((option) => (
+                    {options.map((option, index) => (
                         <TouchableOpacity
                             key={`${placeholder}-${option}`}
                             className="p-2 border-b border-gray-700 "
                             onPress={() => {
-                                onSelect(option);
+                                onSelect(type === "check" ? index : option);
                                 toggle();
                             }}
                         >

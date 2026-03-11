@@ -143,4 +143,12 @@ export const migrations = [
     INSERT OR IGNORE INTO game_types (id, name) VALUES (5, 'Killer');
   `,
     },
+    {
+        version: 4,
+        up: `
+      ALTER TABLE games DROP COLUMN checkIn;
+      ALTER TABLE games DROP COLUMN checkOut;
+      ALTER TABLE games ADD COLUMN checkin INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE games ADD COLUMN checkout INTEGER NOT NULL DEFAULT 0;`,
+    },
 ];
