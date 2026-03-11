@@ -48,35 +48,6 @@ export default function DartKeyboard({
     };
 
     /**
-     * Gérer le clic sur Bull
-     */
-    const handleBullPress = () => {
-        if (currentDarts.length >= 3) {
-            console.warn("Déjà 3 fléchettes lancées");
-            return;
-        }
-
-        const dart = {
-            number: 25,
-            multiplier: 1, // Bull ne peut pas être en double/triple
-            score: 50,
-        };
-
-        onAddDart(dart);
-
-        // ✅ Validation automatique à 3 darts
-        if (currentDarts.length === 2) {
-            const newDarts = [...currentDarts, dart];
-            const total = newDarts.reduce((sum, d) => sum + (d.score || 0), 0);
-
-            console.log("Auto-validation (Bull):", { newDarts, total });
-            onValidateTurn(total, newDarts);
-        }
-
-        setMultiplier(1);
-    };
-
-    /**
      * Gérer l'undo
      */
     const handleUndo = async () => {
@@ -145,7 +116,7 @@ export default function DartKeyboard({
                 {multiplier !== 3 && (
                     <TouchableOpacity
                         key="bull"
-                        onPress={handleBullPress}
+                        onPress={() => handleNumberPress(25)}
                         disabled={currentDarts.length >= 3}
                         className={`w-14 h-14 m-1 rounded-lg items-center justify-center ${
                             currentDarts.length >= 3

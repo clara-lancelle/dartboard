@@ -1,8 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
-import { useState } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
-import Animated from "react-native-reanimated";
 import AvatarComponent from "../components/AvatarComponent";
 import DartKeyboard from "../forms/DartKeyboard";
 import { useGameState } from "../hooks/useGameState";
@@ -26,8 +24,6 @@ import * as SetRepository from "../repositories/SetRepository";
 const GameScreen = () => {
     const route = useRoute();
     const { gameId } = route.params;
-    const [bustAlert, setBustAlert] = useState(false);
-    const [bustPlayerId, setBustPlayerId] = useState(null);
 
     // ✅ Le hook charge tout et gère tout l'état
     const {
@@ -69,12 +65,6 @@ const GameScreen = () => {
         }
 
         const { remainingScore } = result;
-        if (remainingScore < 0) {
-            setBustAlert(true);
-            setBustPlayerId(currentPlayer.id);
-            setTimeout(() => setBustAlert(false), 2000);
-            return;
-        }
 
         // ✅ Vérifier victoire
         if (remainingScore === 0) {
@@ -239,7 +229,7 @@ const GameScreen = () => {
                     const playerDarts = isCurrent ? currentDarts : [];
                     const { remaining, bust } = computeProjectedScore(
                         player.id,
-                        index,
+                        isCurrent,
                     );
 
                     return (
@@ -286,9 +276,9 @@ const GameScreen = () => {
                             </View>
                             {/* Score projeté dynamique */}
                             {bust ? (
-                                <Animated.Text className="text-red-600 text-2xl font-bold flex-1 text-right">
+                                <Text className="text-red-600 text-2xl font-bold flex-1 text-right">
                                     BUSTED !
-                                </Animated.Text>
+                                </Text>
                             ) : (
                                 <Text className="text-2xl font-semibold flex-1 text-right text-gray-800">
                                     {remaining}

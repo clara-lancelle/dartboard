@@ -85,24 +85,30 @@ export const useGameState = (gameId) => {
      * = score actuel - somme des darts en cours
      */
     const computeProjectedScore = useCallback(
-        (playerId, playerDartIndex) => {
+        (playerId, isCurrentPlayer) => {
             if (!game || !playerId) {
                 return { remaining: game?.startingScore ?? 0, bust: false };
             }
 
             const currentScore = scores(playerId);
-
             // Si c'est le joueur courant et qu'il a des darts en cours
-            const currentDartsList =
-                playerDartIndex === currentPlayerIndex ? currentDarts : [];
+            const currentDartsList = isCurrentPlayer ? currentDarts : [];
             const turnTotal = currentDartsList.reduce(
                 (sum, dart) => sum + (dart.score || 0),
                 0,
             );
 
             const remaining = currentScore - turnTotal;
-            const bust = remaining < 0;
-            bust && validateTurn(currentDartsList);
+            console.log("computeProjectedScore", {
+                playerId,
+                currentPlayerIndex,
+                currentScore,
+                remaining,
+                turnTotal,
+                currentDartsList,
+            });
+            const bust = remaining < 0 || remaining <= game.checkout;
+            //bust && validateTurn(currentDartsList);
 
             return { remaining, bust };
         },
@@ -153,10 +159,13 @@ export const useGameState = (gameId) => {
 
             const totalScore = newDarts.reduce((s, d) => s + (d.score || 0), 0);
             const remainingScore = currentPlayerScore - totalScore;
-            const isBust = remainingScore < 0;
-
+            const isBust =
+                remainingScore < 0 || remainingScore <= game.checkout; // En cas de bust, le score reste le même
             const existingTurns = playerTurns[currentPlayer.id] || {};
             const turnNumber = Object.keys(existingTurns).length;
+            const remainingScoreAfter = isBust
+                ? currentPlayerScore
+                : remainingScore;
             try {
                 let savedTurnId;
                 const turnId = existingTurns[turnNumber]?.id || null;
@@ -168,7 +177,7 @@ export const useGameState = (gameId) => {
                         turnId,
                         totalScore,
                         isBust,
-                        remainingScoreAfter: remainingScore,
+                        remainingScoreAfter,
                     });
                     savedTurnId = turnId;
                 } else {
@@ -179,7 +188,7 @@ export const useGameState = (gameId) => {
                         turnNumber,
                         totalScore,
                         isBust,
-                        remainingScoreAfter: remainingScore,
+                        remainingScoreAfter,
                     });
                 }
 
@@ -219,7 +228,7 @@ export const useGameState = (gameId) => {
                             darts: newDarts,
                             totalScore,
                             isBust,
-                            remainingScore,
+                            remainingScoreAfter,
                         },
                     },
                 }));
