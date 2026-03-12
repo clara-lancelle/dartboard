@@ -49,7 +49,9 @@ export default function LabelledAnimatedSelect({
                 onPress={toggle}
             >
                 {selected && (
-                    <Text className="text-gray-900">{options[selected]}</Text>
+                    <Text className="text-gray-900">
+                        {type === "check" ? options[selected] : selected}
+                    </Text>
                 )}
                 <Animated.Text
                     className="text-gray-900 text-base"

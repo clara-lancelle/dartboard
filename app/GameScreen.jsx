@@ -4,15 +4,13 @@ import { Alert, ScrollView, Text, View } from "react-native";
 import AvatarComponent from "../components/AvatarComponent";
 import DartKeyboard from "../forms/DartKeyboard";
 import { useGameState } from "../hooks/useGameState";
-import * as GameRepository from "../repositories/GameRepository";
-import * as LegRepository from "../repositories/LegRepository";
-import * as SetRepository from "../repositories/SetRepository";
 
 /**TODO
- * Affichage BUSTED !
+ * ** VICTOIRE **
+ * animation de victoire
+ * si leg = n/n, set = s/s = > match gagné
  * Voir les stats après victoire
  * Retour a l'accueil après victoire
- * verif if remainingscore === 0 && last dart is double or bull
  * Ajouter un bouton "Terminer le leg" pour les cas où le joueur ne peut pas finir (ex: 1 point restant)
  * Ajouter un bouton "Terminer le set" pour les cas où les joueurs veulent arrêter avant la fin (ex: 2-0 dans un set de 3 legs)
  * Ajouter un bouton "Terminer la partie" pour les cas où les joueurs veulent arrêter avant la fin (ex: 2-0 dans un match de 3 sets)
@@ -68,12 +66,7 @@ const GameScreen = () => {
 
         // ✅ Vérifier victoire
         if (remainingScore === 0) {
-            const winResult = await checkWinConditions(
-                currentPlayer.id,
-                LegRepository,
-                SetRepository,
-                GameRepository,
-            );
+            const winResult = await checkWinConditions(currentPlayer.id);
 
             if (!winResult || winResult.type === "ERROR") {
                 console.error("Erreur lors de la vérification des victoires");

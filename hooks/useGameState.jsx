@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import * as DartRepository from "../repositories/DartRepository";
 import * as GameRepository from "../repositories/GameRepository";
+import * as LegRepository from "../repositories/LegRepository";
+import * as SetRepository from "../repositories/SetRepository";
 import * as TurnRepository from "../repositories/TurnRepository";
 
 export const useGameState = (gameId) => {
@@ -97,7 +99,7 @@ export const useGameState = (gameId) => {
                 (sum, dart) => sum + (dart.score || 0),
                 0,
             );
-
+            const lastDart = currentDartsList[currentDartsList.length - 1];
             const remaining = currentScore - turnTotal;
             console.log("computeProjectedScore", {
                 playerId,
@@ -107,8 +109,14 @@ export const useGameState = (gameId) => {
                 turnTotal,
                 currentDartsList,
             });
-            const bust = remaining < 0 || remaining <= game.checkout;
-            //bust && validateTurn(currentDartsList);
+            const bust =
+                (remaining != 0 &&
+                    (remaining < 0 || remaining <= game.checkout)) ||
+                (remaining === 0 && lastDart.multiplier !== game.checkout + 1);
+            console.log(currentDartsList.length);
+            bust &&
+                currentDartsList.length < 3 &&
+                validateTurn(currentDartsList); // Valider automatiquement en cas de bust
 
             return { remaining, bust };
         },
@@ -159,8 +167,12 @@ export const useGameState = (gameId) => {
 
             const totalScore = newDarts.reduce((s, d) => s + (d.score || 0), 0);
             const remainingScore = currentPlayerScore - totalScore;
+            const lastDart = newDarts[newDarts.length - 1];
             const isBust =
-                remainingScore < 0 || remainingScore <= game.checkout; // En cas de bust, le score reste le même
+                (remainingScore != 0 &&
+                    (remainingScore < 0 || remainingScore <= game.checkout)) ||
+                (remainingScore === 0 &&
+                    lastDart.multiplier !== game.checkout + 1);
             const existingTurns = playerTurns[currentPlayer.id] || {};
             const turnNumber = Object.keys(existingTurns).length;
             const remainingScoreAfter = isBust
@@ -250,10 +262,10 @@ export const useGameState = (gameId) => {
      * Vérifier si quelqu'un a gagné le leg/set/match et gérer la suite
      */
     const checkWinConditions = useCallback(
-        async (playerId, legRepository, setRepository, gameRepository) => {
+        async (playerId) => {
             try {
                 // 1️⃣ Marquer le leg comme gagné
-                await legRepository.markLegAsWon(currentLeg.id, playerId);
+                await LegRepository.markLegAsWon(currentLeg.id, playerId);
 
                 // 2️⃣ Incrémenter les victoires de leg
                 const updatedLegWins = (legWinsByPlayer[playerId] ?? 0) + 1;
@@ -266,7 +278,7 @@ export const useGameState = (gameId) => {
                 const legsToWin = Math.ceil(game.legsNumber / 2);
                 if (updatedLegWins >= legsToWin) {
                     // Le joueur a gagné le set
-                    await setRepository.markSetAsWon(
+                    await SetRepository.markSetAsWon(
                         currentLeg.setId,
                         playerId,
                     );
@@ -277,16 +289,12 @@ export const useGameState = (gameId) => {
                         [playerId]: updatedSetWins,
                     }));
 
-                    console.log("Set gagné par le joueur", playerId, {
-                        updatedLegWins,
-                        updatedSetWins,
-                        "in game": game,
-                    });
                     // 4️⃣ Vérifier victoire du match
                     const setsToWin = Math.ceil(game.setsNumber / 2);
+
                     if (updatedSetWins >= setsToWin) {
                         // Le joueur a gagné le match !
-                        await gameRepository.markGameAsWon(game.id, playerId);
+                        await GameRepository.markGameAsWon(game.id, playerId);
 
                         return {
                             type: "MATCH_WON",
